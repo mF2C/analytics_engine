@@ -1,0 +1,3 @@
+recursive-include analytics_engine *.py
+include analytics_engine/README.md
+include *.conf

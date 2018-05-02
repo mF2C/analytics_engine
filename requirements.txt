@@ -1,0 +1,7 @@
+numpy
+pyyaml
+pandas==0.17.1
+requests==2.17.3
+influxdb==4.1.0
+networkx==1.11
+flask
