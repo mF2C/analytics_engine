@@ -23,7 +23,6 @@ import argparse
 from analytics_engine import common as common
 from analytics_engine.heuristics.beans.workload import Workload
 from analytics_engine.heuristics.pipes.annotated_telemetry_pipe import AnnotatedTelemetryPipe
-from analytics_engine.heuristics.pipes.method_g.method_g_pipe import MethodGPipe
 from analytics_engine.heuristics.pipes.mf2c.avg_heuristic import AvgHeuristicPipe
 from analytics_engine.heuristics.pipes.mf2c.optimal_pipe import OptimalPipe
 from analytics_engine.heuristics.pipes.mf2c.refine_recipe_pipe import RefineRecipePipe
@@ -37,7 +36,7 @@ LOG = common.LOG
 CFS_GENERAL = 'General'
 CFS_DYNAMIC_PARAMS = 'Dynamic-params'
 
-PIPES = ['avg_analysis', 'telemetry', 'method_G',
+PIPES = ['avg_analysis', 'telemetry',
          'optimal', 'refine_recipe']
 
 class Engine:
@@ -58,8 +57,6 @@ class Engine:
             pipe_exec = AvgHeuristicPipe()
         elif self.pipe == 'telemetry':
             pipe_exec = AnnotatedTelemetryPipe()
-        elif self.pipe == 'method_G':
-            pipe_exec = MethodGPipe()
         elif self.pipe == 'optimal':
             pipe_exec = OptimalPipe()
         elif self.pipe == 'refine_recipe':
