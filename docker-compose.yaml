@@ -1,18 +1,24 @@
 version: '2.0'
 services:
  influxdb:
+  hostname: influx
   image: influxdb:latest
   container_name: influxdb
   environment:
     - ADMIN_USER=analytics_engine
     - INFLUX_INIT_PWD=analytics_engine
     - PRE_CREATE_DB=analytics_engine_development
+  ports:
+    - "8086:8086"
+  expose:
+    - "9086"
   volumes:
     # Data persistency
     - /srv/docker/influxdb/data:/var/lib/influxdb
 
  analytics_engine:
-  image: analytics_engine:1.9
+  hostname: analytics_engine
+  image: analytics_engine:2.0
   container_name: analytics_engine
   build: .
 
