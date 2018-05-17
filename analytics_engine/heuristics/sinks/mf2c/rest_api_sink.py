@@ -78,7 +78,7 @@ def get_optimal():
     pipe_exec = OptimalPipe()
     workload = pipe_exec.run(workload)
     results = workload.get_metadata(OptimalFilter.__filter_name__)
-    return Response(results.T.to_dict().values(), mimetype=MIME)
+    return Response(results.to_dict('results'), mimetype=MIME)
 
 
 @app.route("/mf2c/analyse", methods=['GET', 'POST'])
