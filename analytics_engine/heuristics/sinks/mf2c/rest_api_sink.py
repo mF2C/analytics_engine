@@ -49,7 +49,7 @@ LOG = common.LOG
 
 app = flask.Flask(__name__)
 
-MIME = "application/json"
+MIME = "application/json"0
 
 
 @app.route("/mf2c/optimal", methods=['GET', 'POST'])
@@ -78,7 +78,7 @@ def get_optimal():
     pipe_exec = OptimalPipe()
     workload = pipe_exec.run(workload)
     results = workload.get_metadata(OptimalFilter.__filter_name__)
-    return Response(results.to_json(), mimetype=MIME)
+    return Response(results.T.to_dict().values(), mimetype=MIME)
 
 
 @app.route("/mf2c/analyse", methods=['GET', 'POST'])
