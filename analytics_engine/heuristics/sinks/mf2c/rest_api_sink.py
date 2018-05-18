@@ -49,7 +49,7 @@ LOG = common.LOG
 
 app = flask.Flask(__name__)
 
-MIME = "application/json"0
+MIME = "application/json"
 
 
 @app.route("/mf2c/optimal", methods=['GET', 'POST'])
