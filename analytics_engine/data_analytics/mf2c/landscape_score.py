@@ -58,14 +58,15 @@ class LandscapeScore(object):
 
             if 'intel/use/compute/utilization' in util:
                 res[node_name]['compute'] = (util.get('intel/use/compute/utilization').mean()) / 100.0
+            elif 'intel/procfs/cpu/utilization_percentage' in util:
+                res[node_name]['compute'] = (util.get('intel/procfs/cpu/utilization_percentage').mean()) / 100.0
             if 'intel/use/memory/utilization' in util:
                 res[node_name]['memory'] = (util.get('intel/use/memory/utilization').mean()) / 100.0
             if 'intel/use/disk/utilization' in util:
                 res[node_name]['disk'] = (util.get('intel/use/disk/utilization').mean()) / 100.0
             if 'intel/use/network/utilization' in util:
                 res[node_name]['network'] =(util.get('intel/use/network/utilization').mean()) / 100.0
-            if 'intel/procfs/cpu/utilization_percentage' in util:
-                res[node_name]['compute'] = (util.get('intel/procfs/cpu/utilization_percentage').mean()) / 100.0
+           
         return res
 
     @staticmethod
