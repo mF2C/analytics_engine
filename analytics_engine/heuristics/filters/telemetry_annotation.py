@@ -82,7 +82,30 @@ class TelemetryAnnotation(object):
                 InfoGraphNode.set_telemetry_data(node, telemetry_data)
                 if utilization and not telemetry_data.empty:
                     self._utilization(node, telemetry_data)
+                    # if only procfs is available, results needs to be
+                    # propagated at machine level
+                    if InfoGraphNode.get_type(node) == InfoGraphNodeType.PHYSICAL_PU:
+                        source = InfoGraphNode.get_machine_name_of_pu(node)
+                        machine = InfoGraphNode.get_node(internal_graph, source)
+                        machine_util = InfoGraphNode.get_compute_utilization(machine)
+                        if '/intel/use/compute/utilization' not in machine_util.columns:
+                            sum_util = None
+                            pu_util = InfoGraphNode.get_compute_utilization(node)[
+                                    'intel/procfs/cpu/utilization_percentage']
+                            pu_util = pu_util.fillna(0)
+                            if 'intel/procfs/cpu/utilization_percentage' in machine_util.columns:
 
+                                machine_util = machine_util['intel/procfs/cpu/utilization_percentage']
+                                machine_util = machine_util.fillna(0)
+                                sum_util = machine_util.add(pu_util, fill_value=0)
+                            else:
+                                sum_util = pu_util
+                            if isinstance(sum_util, pandas.Series):
+                                # sum_util.index.name = None
+                                sum_util = pandas.DataFrame(sum_util, columns=['intel/procfs/cpu/utilization_percentage'])
+                            InfoGraphNode.set_compute_utilization(machine, sum_util)
+                        else:
+                            LOG.debug('Found use for node {}'.format(InfoGraphNode.get_name(node)))
                 if saturation:
                     self._saturation(node, telemetry_data)
         return internal_graph
@@ -91,7 +114,14 @@ class TelemetryAnnotation(object):
         # machine usage
         if 'intel/use/compute/utilization' in telemetry_data:
             InfoGraphNode.set_compute_utilization(node,
-                                                  pandas.DataFrame(telemetry_data['intel/use/compute/utilization']))
+                                                  pandas.DataFrame(telemetry_data['intel/use/compute/utilization'],
+                                                                   columns=['intel/use/compute/utilization']))
+        # pu usage
+        if 'intel/procfs/cpu/utilization_percentage' in telemetry_data:
+            InfoGraphNode.set_compute_utilization(node,
+                                                  pandas.DataFrame(
+                                                      telemetry_data['intel/procfs/cpu/utilization_percentage'],
+                                                      columns=['intel/procfs/cpu/utilization_percentage']))
         if 'intel/use/memory/utilization' in telemetry_data:
             InfoGraphNode.set_memory_utilization(node, pandas.DataFrame(telemetry_data['intel/use/memory/utilization']))
         if 'intel/use/disk/utilization' in telemetry_data:
@@ -99,10 +129,7 @@ class TelemetryAnnotation(object):
         if 'intel/use/network/utilization' in telemetry_data:
             InfoGraphNode.set_network_utilization(node,
                                                   pandas.DataFrame(telemetry_data['intel/use/network/utilization']))
-        # pu usage
-        if 'intel/procfs/cpu/utilization_percentage' in telemetry_data:
-            InfoGraphNode.set_compute_utilization(node,
-                                                  pandas.DataFrame(telemetry_data['intel/procfs/cpu/utilization_percentage']))
+        
 
     def _saturation(self, node, telemetry_data):
         if 'intel/use/compute/saturation' in telemetry_data:
