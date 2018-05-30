@@ -475,6 +475,12 @@ class InfoGraphNode(object):
         else:
             return False
 
+    @staticmethod
+    def get_machine_name_of_pu(node):
+        if InfoGraphNode.get_type(node) == InfoGraphNodeType.PHYSICAL_PU:
+            return InfoGraphNode.get_name(node).split('_')[0]
+        return None
+
 class InfoGraphUtilities():
 
     @staticmethod
