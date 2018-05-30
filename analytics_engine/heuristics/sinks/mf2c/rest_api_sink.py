@@ -91,7 +91,6 @@ def analyse():
     LOG.info("Triggering analysis based on input service_id: {}".format(service_id))
     influx_sink = InfluxSink()
     workload = influx_sink.show((service_id, None))
-    LOG.error('SOMETHING REALLY WROOOONG: {}'.format(workload))
     # workload = Workload(service_id, int(params['ts_from']), int(params['ts_to']))
     pipe_exec = AnalysePipe()
     workload = pipe_exec.run(workload)
