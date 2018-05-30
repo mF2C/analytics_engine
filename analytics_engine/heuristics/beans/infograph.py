@@ -223,32 +223,31 @@ class InfoGraphNode(object):
     def set_utilization(node, utilization):
         if not len(node) == 2:
             raise ValueError("Node format is not correct.")
-        node[1][InfoGraphNodeProperty.UTILIZATION] = utilization
-        # node[1][InfoGraphNodeProperty.UTILIZATION] = utilization
+        node[1][InfoGraphNodeProperty.UTILIZATION] = utilization.fillna(0)
 
     @staticmethod
     def set_compute_utilization(node, utilization):
         if not len(node) == 2:
             raise ValueError("Node format is not correct.")
-        node[1][InfoGraphNodeProperty.UTILIZATION_COMPUTE] = utilization
+        node[1][InfoGraphNodeProperty.UTILIZATION_COMPUTE] = utilization.fillna(0)
 
     @staticmethod
     def set_memory_utilization(node, utilization):
         if not len(node) == 2:
             raise ValueError("Node format is not correct.")
-        node[1][InfoGraphNodeProperty.UTILIZATION_MEMORY] = utilization
+        node[1][InfoGraphNodeProperty.UTILIZATION_MEMORY] = utilization.fillna(0)
 
     @staticmethod
     def set_disk_utilization(node, utilization):
         if not len(node) == 2:
             raise ValueError("Node format is not correct.")
-        node[1][InfoGraphNodeProperty.UTILIZATION_DISK] = utilization
+        node[1][InfoGraphNodeProperty.UTILIZATION_DISK] = utilization.fillna(0)
 
     @staticmethod
     def set_network_utilization(node, utilization):
         if not len(node) == 2:
             raise ValueError("Node format is not correct.")
-        node[1][InfoGraphNodeProperty.UTILIZATION_NETWORK] = utilization
+        node[1][InfoGraphNodeProperty.UTILIZATION_NETWORK] = utilization.fillna(0)
 
     ####### saturation ########
     @staticmethod
