@@ -67,7 +67,7 @@ class OptimalFilter(Filter):
                                                     'disk utilization': scores[node_name]['disk'],
                                                     'disk saturation': scores_sat[node_name]['disk']},
                                                     ignore_index=True)
-        heuristic_results.sort_values(by=['compute utilization'], ascending=True)
+        heuristic_results = heuristic_results.sort_values(by=['compute utilization'], ascending=True)
         workload.append_metadata(self.__filter_name__, heuristic_results)
         LOG.info('AVG: {}'.format(heuristic_results))
         return heuristic_results
