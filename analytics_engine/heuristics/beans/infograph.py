@@ -80,6 +80,7 @@ class InfoGraphNodeCategory():
 class InfoGraphNodeProperty():
     LAYER = 'layer'
     TYPE = 'type'
+    IP = 'ipaddress'
     CATEGORY = 'category'
     # ATTRIBUTES = 'attributes'
     QUERIES = 'queries'
@@ -125,6 +126,12 @@ class InfoGraphNode(object):
     @staticmethod
     def get_name(node):
         return node[0]
+
+    @staticmethod
+    def get_ip(node):
+        if len(node) == 2 and InfoGraphNodeProperty.IP in node[1]:
+            return str(node[1][InfoGraphNodeProperty.IP])
+        return None
 
     @staticmethod
     def get_properties(node):

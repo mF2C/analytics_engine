@@ -58,6 +58,7 @@ class OptimalFilter(Filter):
             if InfoGraphNode.get_type(node) == "machine":
                 heuristic_results = heuristic_results.append({'node_name': node_name,
                                                     'type': InfoGraphNode.get_type(node),
+                                                    'IP': InfoGraphNode.get_ip(node),
                                                     'compute utilization': scores[node_name]['compute'],
                                                     'compute saturation': scores_sat[node_name]['compute'],
                                                     'memory utilization': scores[node_name]['memory'],
