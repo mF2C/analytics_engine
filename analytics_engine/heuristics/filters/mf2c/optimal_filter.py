@@ -46,7 +46,7 @@ class OptimalFilter(Filter):
 
         scores = LandscapeScore.utilization_scores(graph)
         scores_sat = LandscapeScore.saturation_scores(graph)
-        heuristic_results = pd.DataFrame(columns=['node_name', 'type',
+        heuristic_results = pd.DataFrame(columns=['node_name', 'type', 'ipaddress',
                                                   'compute utilization', 'compute saturation',
                                                   'memory utilization', 'memory saturation',
                                                   'network utilization', 'network saturation',
@@ -58,6 +58,7 @@ class OptimalFilter(Filter):
             if InfoGraphNode.get_type(node) == "machine":
                 heuristic_results = heuristic_results.append({'node_name': node_name,
                                                     'type': InfoGraphNode.get_type(node),
+                                                    'ipaddress': InfoGraphNode.get_attributes(node).get('ipaddress'),
                                                     'compute utilization': scores[node_name]['compute'],
                                                     'compute saturation': scores_sat[node_name]['compute'],
                                                     'memory utilization': scores[node_name]['memory'],
