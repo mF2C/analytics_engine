@@ -91,7 +91,8 @@ def analyse():
     LOG.info("Triggering analysis based on input service_id: {}".format(service_id))
     influx_sink = InfluxSink()
     workload = influx_sink.show((service_id, None))
-    # workload = Workload(service_id, int(params['ts_from']), int(params['ts_to']))
+    if not workload:
+        workload = Workload(service_id, int(params['ts_from']), int(params['ts_to']))
     pipe_exec = AnalysePipe()
     workload = pipe_exec.run(workload)
     analysis_description = {
@@ -115,7 +116,9 @@ def refine_recipe():
     # eng.run('optimal', recipe['name'], recipe['ts_from'], recipe['ts_to'])
     workload = Workload(str(params['service_id']), None, None)
     pipe_exec = RefineRecipePipe()
-    pipe_exec.set_analysis_id(str(params['analysis_id']))
+    analysis_id = params.get('analysis_id')
+    if analysis_id:
+        pipe_exec.set_analysis_id(str(analysis_id))
 
     recipe = pipe_exec.run(workload)
     if recipe:

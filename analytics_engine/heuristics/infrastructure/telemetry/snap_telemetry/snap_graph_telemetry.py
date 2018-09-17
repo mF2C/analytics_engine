@@ -213,7 +213,8 @@ class SnapAnnotation(GraphTelemetry):
                 return attrs['allocation']
             # fix due to the landscape
             else:
-                attrs = attrs['attributes']['attributes']
+                while attrs.get('attributes', None):
+                    attrs = attrs['attributes']
                 if 'allocation' in attrs:
                     return attrs['allocation']
         if InfoGraphNode.get_type(node) == NODE_TYPE.VIRTUAL_MACHINE:
@@ -251,8 +252,8 @@ class SnapAnnotation(GraphTelemetry):
             # fix attributes from landscaper - fixing
             # permanently on the fly if needed
 
-            if 'attributes' in attrs:
-                attrs = attrs['attributes']['attributes']
+            while attrs.get('attributes', None):
+                attrs = attrs['attributes']
 
             if 'os_index' in attrs:
                 pu = attrs["os_index"]
@@ -326,7 +327,8 @@ class SnapAnnotation(GraphTelemetry):
         node_type = InfoGraphNode.get_type(node)
 
         if node_type in NODE_METRICS:
-            for metric in self._source_metrics(node):
+            source_metrics = self._source_metrics(node)
+            for metric in source_metrics:
                 for metric_start in NODE_METRICS[node_type]:
                     if metric.startswith(metric_start) \
                             and not self._exception(node, metric):
@@ -368,8 +370,9 @@ class SnapAnnotation(GraphTelemetry):
                 identifier = source
                 query_tags = {"source": source}
                 metric_types = self._cached_metrics(identifier, query_tags)
-            except Exception:
+            except Exception as ex:
                 LOG.error('Malformed graph: {}'.format(InfoGraphNode.get_name(node)))
+                LOG.error(ex)
 
 
         elif InfoGraphNode.get_layer(node) == GRAPH_LAYER.VIRTUAL:

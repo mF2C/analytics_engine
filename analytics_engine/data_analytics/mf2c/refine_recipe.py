@@ -50,8 +50,9 @@ class RefineRecipe(object):
         memory = conf_dict['memory utilization']
         network = conf_dict['network utilization']
         storage = conf_dict['disk utilization']
-        RefineRecipe._adjust(recipe, "cpu", compute)
-        RefineRecipe._adjust(recipe, "memory", memory)
-        RefineRecipe._adjust(recipe, "network", network)
-        RefineRecipe._adjust(recipe, "disk", storage)
+        if recipe:
+            RefineRecipe._adjust(recipe, "cpu", compute)
+            RefineRecipe._adjust(recipe, "memory", memory)
+            RefineRecipe._adjust(recipe, "network", network)
+            RefineRecipe._adjust(recipe, "disk", storage)
         return recipe
