@@ -80,7 +80,8 @@ class InfluxSink(Sink):
         """
         self.client = InfluxDBClient(self.INFLUX_IP, self.INFLUX_PORT, self.INFLUX_USER, self.INFLUX_PASSWD)
         dbs = self.client.get_list_database()
-        if self.INFLUX_DATABASE not in dbs:
+        db_names = [db['name'] for db in dbs]
+        if self.INFLUX_DATABASE not in db_names:
             LOG.info('creating DB: {}'.format(self.INFLUX_DATABASE))
             self.client.create_database(self.INFLUX_DATABASE)
         self.client.switch_database(self.INFLUX_DATABASE)
