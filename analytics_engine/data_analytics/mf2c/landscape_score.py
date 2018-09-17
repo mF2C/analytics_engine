@@ -56,17 +56,40 @@ class LandscapeScore(object):
                              util==None):
                 continue
 
+            # intel/use/
             if 'intel/use/compute/utilization' in util:
                 res[node_name]['compute'] = (util.get('intel/use/compute/utilization').mean()) / 100.0
             elif 'intel/procfs/cpu/utilization_percentage' in util:
-                res[node_name]['compute'] = (util.get('intel/procfs/cpu/utilization_percentage').mean()) / 100.0
+                    res[node_name]['compute'] = (util.get('intel/procfs/cpu/utilization_percentage').mean()) / 100.0
             if 'intel/use/memory/utilization' in util:
                 res[node_name]['memory'] = (util.get('intel/use/memory/utilization').mean()) / 100.0
+            elif 'intel/procfs/memory/utilization_percentage' in util:
+                res[node_name]['memory'] = (util.get('intel/procfs/memory/utilization_percentage').mean()) / 100.0
             if 'intel/use/disk/utilization' in util:
                 res[node_name]['disk'] = (util.get('intel/use/disk/utilization').mean()) / 100.0
+            elif 'intel/procfs/disk/utilization_percentage' in util:
+                res[node_name]['disk'] = (util.get('intel/procfs/disk/utilization_percentage').mean()) / 100.0
             if 'intel/use/network/utilization' in util:
-                res[node_name]['network'] =(util.get('intel/use/network/utilization').mean()) / 100.0
-           
+                res[node_name]['network'] = (util.get('intel/use/network/utilization').mean()) / 100.0
+            elif 'intel/psutil/net/utilization_percentage' in util:
+                res[node_name]['network'] = (util.get('intel/psutil/net/utilization_percentage').mean()) / 100.0
+
+            # special handling of cpu, disk & network utilization if node is a machine
+            if InfoGraphNode.node_is_machine(node):
+                # mean from all cpu columns
+                cpu_util = InfoGraphNode.get_compute_utilization(node)
+                cpu_util['total'] = [sum(row) / len(row) for index, row in cpu_util.iterrows()]
+                res[node_name]['compute'] = cpu_util['total'].mean() / 100
+                # mean from all disk columns
+                disk_util = InfoGraphNode.get_disk_utilization(node)
+                disk_util['total'] = [sum(row) / len(row) for index, row in disk_util.iterrows()]
+                res[node_name]['disk'] = disk_util['total'].mean() / 100
+                # mean from all nic columns
+                net_util = InfoGraphNode.get_network_utilization(node)
+                net_util['total'] = [sum(row) / len(row) for index, row in net_util.iterrows()]
+                res[node_name]['network'] = net_util['total'].mean() / 100
+                # custom metric
+
         return res
 
     @staticmethod

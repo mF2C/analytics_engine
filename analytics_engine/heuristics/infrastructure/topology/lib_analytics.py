@@ -126,13 +126,13 @@ class SubGraphExtraction(object):
                 properties, ts_from, time_window)
 
             if not landscape_res:
-                LOG.debug("No graph for a stack returned from analytics")
+                LOG.info("No graph for a stack returned from analytics")
                 # try a service name
                 properties = ["service_name", stack_name]
                 landscape_res = landscape.get_node_by_properties(
                     properties, ts_from, time_window)
                 if not landscape_res:
-                    LOG.debug("No graph for a service returned from analytics")
+                    LOG.info("No graph for a service returned from analytics")
                     return None
 
             res = landscape.get_subgraph(landscape_res.nodes()[0], ts_from, time_window)

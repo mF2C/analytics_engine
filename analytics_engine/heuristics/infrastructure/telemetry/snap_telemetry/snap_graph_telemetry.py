@@ -193,7 +193,7 @@ class SnapAnnotation(GraphTelemetry):
             tag_value = self._disk(node)
         elif tag_key in set(["cpu_id", "cpuID", "core_id"]):
             tag_value = self._pu(node, metric)
-        elif tag_key in set(["nic_id", "interface", "network_interface"]):
+        elif tag_key in set(["nic_id", "interface", "network_interface", "interface_name"]):
             tag_value = self._nic(node)
         elif tag_key == "nova_uuid":
             tag_value = self._nova_uuid(node)
@@ -238,7 +238,9 @@ class SnapAnnotation(GraphTelemetry):
         if (InfoGraphNode.get_type(node) == NODE_TYPE.PHYSICAL_DISK or
                 InfoGraphNode.get_type(node) == NODE_TYPE.PHYSICAL_MACHINE):
             attrs = InfoGraphNode.get_attributes(node)
-            if 'name' in attrs:
+            if 'osdev_storage-name' in attrs:
+                disk = attrs["osdev_storage-name"]
+            elif 'name' in attrs:
                 disk = attrs["name"]
         elif InfoGraphNode.get_type(node) == NODE_TYPE.INSTANCE_DISK:
             disk = InfoGraphNode.get_name(node).split("_")[1]
@@ -266,7 +268,9 @@ class SnapAnnotation(GraphTelemetry):
         nic = None
         if InfoGraphNode.get_type(node) == NODE_TYPE.PHYSICAL_NIC:
             attrs = InfoGraphNode.get_attributes(node)
-            if 'name' in attrs:
+            if 'osdev_network-name' in attrs:
+                nic = attrs["osdev_network-name"]
+            elif 'name' in attrs:
                 nic = attrs["name"]
         # if InfoGraphNode.get_type(node) == NODE_TYPE.PHYSICAL_MACHINE:
         #     LOG.info('NODEEEEE: {}'.format(node))

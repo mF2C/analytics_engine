@@ -24,14 +24,17 @@ from analytics_engine import common
 from analytics_engine.heuristics.beans.infograph import \
     InfoGraphNode, InfoGraphUtilities, InfoGraphNodeType, InfoGraphNodeLayer
 from analytics_engine.heuristics.infrastructure.telemetry.snap_telemetry.snap_graph_telemetry import SnapAnnotation
+#from analytics_engine.infrastructure_manager.local_file.snap_local import SnapLocal
 from analytics_engine.utilities import misc
+from analytics_engine.infrastructure_manager import infograph
+import subprocess
 
 
 LOG = common.LOG
 
 class TelemetryAnnotation(object):
 
-    SUPPORTED_TELEMETRY_SYSTEMS = ['snap']
+    SUPPORTED_TELEMETRY_SYSTEMS = ['snap', 'local']
 
     def __init__(self,
                  server_ip="",
@@ -44,6 +47,8 @@ class TelemetryAnnotation(object):
 
         if telemetry_system == "snap":
             self.telemetry = SnapAnnotation()
+        else:
+            self.telemetry = None
 
     def get_annotated_graph(self,
                             graph,
@@ -67,17 +72,33 @@ class TelemetryAnnotation(object):
         internal_graph = graph.copy()
 
         for node in internal_graph.nodes(data=True):
-            queries = list()
-            try:
-                queries = self.telemetry.get_queries(internal_graph, node, ts_from, ts_to)
-                # queries = self.telemetry.get_queries(graph, node, ts_from, ts_to)
-            except Exception as e:
-                LOG.error("Exception: {}".format(e))
-                LOG.error(e)
-                import traceback
-                traceback.print_exc()
-            if len(queries) != 0:
-                InfoGraphNode.set_queries(node, queries)
+            if isinstance(self.telemetry, SnapAnnotation):
+                queries = list()
+                try:
+                    queries = self.telemetry.get_queries(internal_graph, node, ts_from, ts_to)
+                    # queries = self.telemetry.get_queries(graph, node, ts_from, ts_to)
+                except Exception as e:
+                    LOG.error("Exception: {}".format(e))
+                    LOG.error(e)
+                    import traceback
+                    traceback.print_exc()
+                if len(queries) != 0:
+                    InfoGraphNode.set_queries(node, queries)
+                    telemetry_data = self.telemetry.get_data(node)
+                    InfoGraphNode.set_telemetry_data(node, telemetry_data)
+                    if utilization and not telemetry_data.empty:
+                        self._utilization(node, telemetry_data)
+                        # if only procfs is available, results needs to be
+                        # propagated at machine level
+                        if InfoGraphNode.get_type(node) == InfoGraphNodeType.PHYSICAL_PU:
+                            self._annotate_machine_pu_util(internal_graph, node)
+                        if InfoGraphNode.node_is_disk(node):
+                            self._annotate_machine_disk_util(internal_graph, node)
+                        if InfoGraphNode.node_is_nic(node):
+                            self._annotate_machine_network_util(internal_graph, node)
+                    if saturation:
+                        self._saturation(node, telemetry_data)
+            else:
                 telemetry_data = self.telemetry.get_data(node)
                 InfoGraphNode.set_telemetry_data(node, telemetry_data)
                 if utilization and not telemetry_data.empty:
@@ -110,6 +131,44 @@ class TelemetryAnnotation(object):
                     self._saturation(node, telemetry_data)
         return internal_graph
 
+    def _annotate_machine_pu_util(self, internal_graph, node):
+        source = InfoGraphNode.get_machine_name_of_pu(node)
+        machine = InfoGraphNode.get_node(internal_graph, source)
+        machine_util = InfoGraphNode.get_compute_utilization(machine)
+        if 'intel/use/compute/utilization' not in machine_util.columns:
+            sum_util = None
+            cpu_metric = 'intel/procfs/cpu/utilization_percentage'
+            pu_util = InfoGraphNode.get_compute_utilization(node)[cpu_metric]
+            pu_util = pu_util.fillna(0)
+            machine_util[InfoGraphNode.get_attributes(node)['name']] = pu_util
+            InfoGraphNode.set_compute_utilization(machine, machine_util)
+        else:
+            LOG.debug('Found use for node {}'.format(InfoGraphNode.get_name(node)))
+
+    def _annotate_machine_disk_util(self, internal_graph, node):
+        source = InfoGraphNode.get_attributes(node)['allocation']
+        machine = InfoGraphNode.get_node(internal_graph, source)
+        machine_util = InfoGraphNode.get_disk_utilization(machine)
+        if 'intel/use/disk/utilization' not in machine_util.columns:
+            disk_metric = 'intel/procfs/disk/utilization_percentage'
+            disk_util = InfoGraphNode.get_disk_utilization(node)[disk_metric]
+            disk_util = disk_util.fillna(0)
+            machine_util[InfoGraphNode.get_attributes(node)['name']] = disk_util
+            InfoGraphNode.set_disk_utilization(machine, machine_util)
+        else:
+            LOG.debug('Found use for node {}'.format(InfoGraphNode.get_name(node)))
+
+    def _annotate_machine_network_util(self, internal_graph, node):
+        source = InfoGraphNode.get_attributes(node)['allocation']
+        machine = InfoGraphNode.get_node(internal_graph, source)
+        machine_util = InfoGraphNode.get_network_utilization(machine)
+        if 'intel/use/network/utilization' not in machine_util.columns:
+            net_metric = 'intel/psutil/net/utilization_percentage'
+            net_util = InfoGraphNode.get_network_utilization(node)[net_metric]
+            net_util = net_util.fillna(0)
+            machine_util[InfoGraphNode.get_attributes(node)['name']] = net_util
+            InfoGraphNode.set_network_utilization(machine, machine_util)
+
     def _utilization(self, node, telemetry_data):
         # machine usage
         if 'intel/use/compute/utilization' in telemetry_data:
@@ -118,10 +177,10 @@ class TelemetryAnnotation(object):
                                                                    columns=['intel/use/compute/utilization']))
         # pu usage
         if 'intel/procfs/cpu/utilization_percentage' in telemetry_data:
-            InfoGraphNode.set_compute_utilization(node,
-                                                  pandas.DataFrame(
-                                                      telemetry_data['intel/procfs/cpu/utilization_percentage'],
-                                                      columns=['intel/procfs/cpu/utilization_percentage']))
+                InfoGraphNode.set_compute_utilization(node,
+                                                      pandas.DataFrame(
+                                                          telemetry_data['intel/procfs/cpu/utilization_percentage'],
+                                                          columns=['intel/procfs/cpu/utilization_percentage']))
         if 'intel/use/memory/utilization' in telemetry_data:
             InfoGraphNode.set_memory_utilization(node, pandas.DataFrame(telemetry_data['intel/use/memory/utilization']))
         if 'intel/use/disk/utilization' in telemetry_data:
@@ -129,7 +188,33 @@ class TelemetryAnnotation(object):
         if 'intel/use/network/utilization' in telemetry_data:
             InfoGraphNode.set_network_utilization(node,
                                                   pandas.DataFrame(telemetry_data['intel/use/network/utilization']))
-        
+        # supporting not available /use/ metrics
+
+        if 'intel/procfs/meminfo/mem_total' in telemetry_data and 'intel/procfs/meminfo/mem_used' in telemetry_data:
+            # LOG.info('Found memory utilization procfs')
+            mem_used = telemetry_data['intel/procfs/meminfo/mem_used'].fillna(0)
+            mem_total = telemetry_data['intel/procfs/meminfo/mem_total'].fillna(0)
+            mem_util = mem_used * 100 / mem_total
+            mem_util.name = 'intel/procfs/memory/utilization_percentage'
+            InfoGraphNode.set_memory_utilization(node, pandas.DataFrame(mem_util))
+        if 'intel/procfs/disk/io_time' in telemetry_data:
+            io_time = telemetry_data['intel/procfs/disk/io_time'].fillna(0)
+            disk_util = io_time*100/1000
+            disk_util.name = 'intel/procfs/disk/utilization_percentage'
+            InfoGraphNode.set_disk_utilization(node, pandas.DataFrame(disk_util))
+        if 'intel/psutil/net/bytes_recv' in telemetry_data and 'intel/psutil/net/bytes_sent' in telemetry_data:
+            nic = self.telemetry._nic(node)
+            cmd = 'cat'
+            cmd_param = '/sys/class/net/' + nic + '/speed'
+            nic_speed = int(subprocess.check_output([cmd, cmd_param])) * 1000000
+            net_data = telemetry_data.filter(['timestamp', 'intel/psutil/net/bytes_recv','intel/psutil/net/bytes_sent'], axis=1)
+            net_data.fillna(0)
+            net_data['intel/psutil/net/bytes_total'] = net_data['intel/psutil/net/bytes_recv']+net_data['intel/psutil/net/bytes_sent']
+            net_data_interval = net_data.set_index('timestamp').diff()
+            net_data_interval['intel/psutil/net/utilization_percentage'] = net_data_interval['intel/psutil/net/bytes_total'] * 100 /nic_speed
+            net_data_pct = pandas.DataFrame(net_data_interval['intel/psutil/net/utilization_percentage'])
+            InfoGraphNode.set_network_utilization(node, net_data_pct)
+
 
     def _saturation(self, node, telemetry_data):
         if 'intel/use/compute/saturation' in telemetry_data:
