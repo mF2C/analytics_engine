@@ -88,3 +88,13 @@ class FileSink(Sink):
 
         def show(self, source_type):
             LOG.error('File sink does not implement show method')
+
+    @staticmethod
+    def check(source_name):
+        exp_dir = os.path.join(LOCAL_RES_DIR, str(source_name))
+        if not os.path.exists(LOCAL_RES_DIR):
+            return False
+
+        if not os.path.exists(exp_dir):
+            return False
+        return True

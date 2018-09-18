@@ -21,9 +21,12 @@ __status__ = "Development"
 
 from analytics_engine import common
 from analytics_engine.heuristics.beans.infograph import InfoGraphNode, InfoGraphUtilities
-from analytics_engine.heuristics.filters import telemetry_annotation
+from analytics_engine.heuristics.filters import telemetry_annotation as ta
+from analytics_engine.heuristics.filters import parallelized_telemetry_annotation as pta
 from analytics_engine.infrastructure_manager import graphs
 from analytics_engine.infrastructure_manager.config_helper import ConfigHelper
+import threading
+import multiprocessing
 
 # ApexLake dependencies
 from analytics_engine.infrastructure_manager import landscape
@@ -36,6 +39,8 @@ TELEMETRY_TYPE_SNAP = "snap"
 
 MILLISECONDS = 10
 MINUTES_TF = 1
+
+PARALLEL = False
 
 class SubGraphExtraction(object):
 
@@ -230,10 +235,40 @@ class SubgraphUtilities(object):
         #     workload_name, int(ts_from), int(ts_to),
         #     name_filtering_support=True)
         res = landscape.get_graph()
-        for node in res.nodes(data=True):
-            attrs = InfoGraphNode.get_attributes(node)
-            attrs = InfoGraphUtilities.str_to_dict(attrs)
-            InfoGraphNode.set_attributes(node, attrs)
+        PARALLEL = False
+        if PARALLEL:
+            i = 0
+            threads = []
+            cpu_count = multiprocessing.cpu_count()
+            all_node = res.nodes(data=True)
+            no_node_thread = len(res.nodes()) / cpu_count
+            node_pool = []
+
+            for node in all_node:
+                if i < no_node_thread:
+                    node_pool.append(node)
+                    i = i + 1
+                else:
+                    thread1 = ParallelLandscape(i, "Thread-{}".format(InfoGraphNode.get_name(node)), i,
+                                                          node_pool)
+                    # thread1 = ParallelTelemetryAnnotation(i, "Thread-{}".format(InfoGraphNode.get_name(node)), i,
+                    #                                       node_pool, internal_graph, self.telemetry, ts_to, ts_from)
+                    thread1.start()
+                    threads.append(thread1)
+                    i = 0
+                    node_pool = []
+            if len(node_pool) != 0:
+                thread1 = ParallelLandscape(i, "Thread-{}".format(InfoGraphNode.get_name(node)), i,
+                                            node_pool)
+                thread1.start()
+                threads.append(thread1)
+
+            [t.join() for t in threads]
+        else:
+            for node in res.nodes(data=True):
+                attrs = InfoGraphNode.get_attributes(node)
+                attrs = InfoGraphUtilities.str_to_dict(attrs)
+                InfoGraphNode.set_attributes(node, attrs)
         return res
 
     @staticmethod
@@ -258,13 +293,33 @@ class SubgraphUtilities(object):
         if ts_from == 0 and ts_to == 0:
             ts_to = int(time.time())
             ts_from = ts_to - (MILLISECONDS*MINUTES_TF)
-        annotation = \
-            telemetry_annotation.TelemetryAnnotation(
-                telemetry_system=telemetry_type)
+        PARALLEL = False
+        if PARALLEL:
+            annotation = \
+                pta.TelemetryAnnotation(
+                    telemetry_system=telemetry_type)
+        else:
+            annotation = \
+                ta.TelemetryAnnotation(
+                    telemetry_system=telemetry_type)
         res = annotation.get_annotated_graph(
             graph, ts_from, ts_to, utilization=True, saturation=True)
         return res
 
+class ParallelLandscape(threading.Thread):
+
+    def __init__(self, threadID, name, counter, node):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.counter = counter
+        self.node_pool = node
+
+    def run(self):
+        for node in self.node_pool:
+            attrs = InfoGraphNode.get_attributes(node)
+            attrs = InfoGraphUtilities.str_to_dict(attrs)
+            InfoGraphNode.set_attributes(node, attrs)
 
 
 

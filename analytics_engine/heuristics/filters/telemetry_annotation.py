@@ -24,9 +24,7 @@ from analytics_engine import common
 from analytics_engine.heuristics.beans.infograph import \
     InfoGraphNode, InfoGraphUtilities, InfoGraphNodeType, InfoGraphNodeLayer
 from analytics_engine.heuristics.infrastructure.telemetry.snap_telemetry.snap_graph_telemetry import SnapAnnotation
-#from analytics_engine.infrastructure_manager.local_file.snap_local import SnapLocal
 from analytics_engine.utilities import misc
-from analytics_engine.infrastructure_manager import infograph
 import subprocess
 
 

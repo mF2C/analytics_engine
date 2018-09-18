@@ -343,7 +343,7 @@ class SnapAnnotation(GraphTelemetry):
                         if metric.startswith('intel/libvirt/'):
                             self._get_nova_uuids(node)
                             for x in range(0, len(self.vms)):
-                                LOG.info('Adding {}'.format(metric))
+                                #LOG.info('Adding {}'.format(metric))
                                 metrics.append(metric)
                         else:
                             metrics.append(metric)
@@ -353,7 +353,7 @@ class SnapAnnotation(GraphTelemetry):
         if InfoGraphNode.get_type(node) == NODE_TYPE.PHYSICAL_MACHINE:
             phy_name = InfoGraphNode.get_name(node)
             self.vms = self.landscape.get_neighbours_by_type(phy_name, "vm")
-            LOG.info('Collecting nova uuids: {}'.format(self.vms))
+            #LOG.info('Collecting nova uuids: {}'.format(self.vms))
 
     def _source_metrics(self, node):
         """
@@ -383,8 +383,8 @@ class SnapAnnotation(GraphTelemetry):
             source = self._source(node)
             stack = self._stack(node)
 
-            LOG.info("SOURCE: {}".format(source))
-            LOG.info("STACK: {}".format(stack))
+            #LOG.info("SOURCE: {}".format(source))
+            #LOG.info("STACK: {}".format(stack))
 
             if stack is not None:
 
