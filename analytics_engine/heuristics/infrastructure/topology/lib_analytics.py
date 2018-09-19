@@ -235,7 +235,7 @@ class SubgraphUtilities(object):
         #     workload_name, int(ts_from), int(ts_to),
         #     name_filtering_support=True)
         res = landscape.get_graph()
-        PARALLEL = False
+        #PARALLEL = True
         if PARALLEL:
             i = 0
             threads = []
@@ -293,7 +293,7 @@ class SubgraphUtilities(object):
         if ts_from == 0 and ts_to == 0:
             ts_to = int(time.time())
             ts_from = ts_to - (MILLISECONDS*MINUTES_TF)
-        PARALLEL = False
+        #PARALLEL = True
         if PARALLEL:
             annotation = \
                 pta.TelemetryAnnotation(
