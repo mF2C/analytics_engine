@@ -75,8 +75,8 @@ class SnapAnnotation(GraphTelemetry):
         self.landscape = landscape
         node_layer = InfoGraphNode.get_layer(node)
         # Service Layer metrics are not required
-        if node_layer == GRAPH_LAYER.SERVICE:
-            return []
+        #if node_layer == GRAPH_LAYER.SERVICE:
+        #    return []
         for metric in self._get_metrics(node):
             try:
                 query = self._build_query(metric, node, ts_from, ts_to)
@@ -204,6 +204,8 @@ class SnapAnnotation(GraphTelemetry):
                 tag_value = self._nic(node)
             elif "intel/use/disk" in metric:
                 tag_value = self._disk(node)
+        elif tag_key == "docker_id":
+            tag_value = InfoGraphNode.get_docker_id(node)
         return tag_value
 
     def _source(self, node):
@@ -231,6 +233,10 @@ class SnapAnnotation(GraphTelemetry):
         if InfoGraphNode.get_type(node) == NODE_TYPE.PHYSICAL_MACHINE:
             if 'name' in attrs:
                 return attrs['name']
+        if InfoGraphNode.get_type(node) == NODE_TYPE.DOCKER_CONTAINER:
+            docker_node = self.landscape.get_neighbour_by_type(InfoGraphNode.get_name(node),'docker_node')
+            machine = self.landscape.get_neighbour_by_type(docker_node,'machine')
+            return machine
         return None
 
     def _disk(self, node):
@@ -366,9 +372,10 @@ class SnapAnnotation(GraphTelemetry):
         """
 
         metric_types = []
-
-        if InfoGraphNode.get_layer(node) == GRAPH_LAYER.PHYSICAL \
-                or InfoGraphNode.get_type(node) == NODE_TYPE.INSTANCE_DISK:
+        node_layer = InfoGraphNode.get_layer(node)
+        node_type = InfoGraphNode.get_type(node)
+        if node_layer == GRAPH_LAYER.PHYSICAL \
+                or node_type == NODE_TYPE.INSTANCE_DISK:
             try:
                 source = self._source(node)
                 identifier = source
@@ -379,7 +386,7 @@ class SnapAnnotation(GraphTelemetry):
                 LOG.error(ex)
 
 
-        elif InfoGraphNode.get_layer(node) == GRAPH_LAYER.VIRTUAL:
+        elif node_layer == GRAPH_LAYER.VIRTUAL:
             source = self._source(node)
             stack = self._stack(node)
 
@@ -392,6 +399,13 @@ class SnapAnnotation(GraphTelemetry):
                 # query_tags = {"source": source, "stack": stack}
 
                 query_tags = {"stack_name": stack}
+                metric_types = self._cached_metrics(identifier, query_tags)
+        elif node_type == NODE_TYPE.DOCKER_CONTAINER:
+            source = self._source(node)
+            docker_id = InfoGraphNode.get_docker_id(node)
+            if docker_id is not None and source is not None:
+                identifier = "{}-{}".format(source, docker_id)
+                query_tags = {"docker_id": docker_id, "source": source}
                 metric_types = self._cached_metrics(identifier, query_tags)
 
         return metric_types

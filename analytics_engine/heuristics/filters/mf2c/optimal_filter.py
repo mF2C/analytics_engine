@@ -55,9 +55,10 @@ class OptimalFilter(Filter):
 
         for node in graph.nodes(data=True):
             node_name = InfoGraphNode.get_name(node)
-            if InfoGraphNode.get_type(node) == "machine":
+            node_type = InfoGraphNode.get_type(node)
+            if node_type == "machine":
                 heuristic_results = heuristic_results.append({'node_name': node_name,
-                                                    'type': InfoGraphNode.get_type(node),
+                                                    'type': node_type,
                                                     'ipaddress': InfoGraphNode.get_attributes(node).get('ipaddress'), 
                                                     'compute utilization': scores[node_name]['compute'],
                                                     'compute saturation': scores_sat[node_name]['compute'],
@@ -67,6 +68,20 @@ class OptimalFilter(Filter):
                                                     'network saturation': scores_sat[node_name]['network'],
                                                     'disk utilization': scores[node_name]['disk'],
                                                     'disk saturation': scores_sat[node_name]['disk']},
+                                                    ignore_index=True)
+            if InfoGraphNode.get_type(node) == "docker_container":
+                node_name = InfoGraphNode.get_docker_id(node)
+                heuristic_results = heuristic_results.append({'node_name': node_name,
+                                                    'type': node_type,
+                                                    'ipaddress': None,
+                                                    'compute utilization': scores[node_name]['compute'],
+                                                    'compute saturation': None,
+                                                    'memory utilization': scores[node_name]['memory'],
+                                                    'memory saturation': None,
+                                                    'network utilization': scores[node_name]['network'],
+                                                    'network saturation': None,
+                                                    'disk utilization': scores[node_name]['disk'],
+                                                    'disk saturation': None},
                                                     ignore_index=True)
         heuristic_results = heuristic_results.sort_values(by=['compute utilization'], ascending=True)
         workload.append_metadata(self.__filter_name__, heuristic_results)

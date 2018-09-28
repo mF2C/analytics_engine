@@ -21,7 +21,8 @@ __status__ = "Development"
 
 import pandas
 import analytics_engine.common as common
-from analytics_engine.heuristics.beans.infograph import InfoGraphNode
+from analytics_engine.heuristics.beans.infograph import InfoGraphNode, InfoGraphNodeType
+
 # from lib_analytics
 
 LOG = common.LOG
@@ -89,6 +90,26 @@ class LandscapeScore(object):
                 net_util['total'] = [sum(row) / len(row) for index, row in net_util.iterrows()]
                 res[node_name]['network'] = net_util['total'].mean() / 100
                 # custom metric
+
+            if InfoGraphNode.get_type(node)==InfoGraphNodeType.DOCKER_CONTAINER:
+                node_name = InfoGraphNode.get_docker_id(node)
+                res[node_name] = {}
+                if 'intel/docker/stats/cgroups/cpu_stats/cpu_usage/percentage' in util.columns:
+                    res[node_name]['compute'] = util['intel/docker/stats/cgroups/cpu_stats/cpu_usage/percentage'].mean() / 100
+                else:
+                    res[node_name]['compute'] = 0
+                if 'intel/docker/stats/cgroups/memory_stats/usage/percentage' in util.columns:
+                    res[node_name]['memory'] = util['intel/docker/stats/cgroups/memory_stats/usage/percentage'].mean() / 100
+                else:
+                    res[node_name]['memory'] = 0
+                if 'intel/docker/stats/network/utilization_percentage' in util.columns:
+                    res[node_name]['network'] = util['intel/docker/stats/network/utilization_percentage'].mean() / 100
+                else:
+                    res[node_name]['network'] = 0
+                if 'intel/docker/stats/cgroups/blkio_stats/io_time_recursive/percentage' in util.columns:
+                    res[node_name]['disk'] = util['intel/docker/stats/cgroups/blkio_stats/io_time_recursive/percentage'].mean() / 100
+                else:
+                    res[node_name]['disk'] = 0
 
         return res
 

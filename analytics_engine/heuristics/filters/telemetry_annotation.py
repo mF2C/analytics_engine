@@ -68,7 +68,7 @@ class TelemetryAnnotation(object):
         TelemetryAnnotation._get_annotated_graph_input_validation(
             graph, ts_from, ts_to)
         internal_graph = graph.copy()
-
+        self.internal_graph = internal_graph
         for node in internal_graph.nodes(data=True):
             if isinstance(self.telemetry, SnapAnnotation):
                 queries = list()
@@ -82,6 +82,7 @@ class TelemetryAnnotation(object):
                     traceback.print_exc()
                 if len(queries) != 0:
                     InfoGraphNode.set_queries(node, queries)
+
                     telemetry_data = self.telemetry.get_data(node)
                     InfoGraphNode.set_telemetry_data(node, telemetry_data)
                     if utilization and not telemetry_data.empty:
@@ -142,8 +143,6 @@ class TelemetryAnnotation(object):
                 pu_util = pu_util.fillna(0)
                 machine_util[InfoGraphNode.get_attributes(node)['name']] = pu_util
                 InfoGraphNode.set_compute_utilization(machine, machine_util)
-                print "Adding util for CPU "
-                print InfoGraphNode.get_name(node)
             else:
                 LOG.info('CPU util not Found use for node {}'.format(InfoGraphNode.get_name(node)))
         else:
@@ -217,10 +216,9 @@ class TelemetryAnnotation(object):
             disk_util.name = 'intel/procfs/disk/utilization_percentage'
             InfoGraphNode.set_disk_utilization(node, pandas.DataFrame(disk_util))
         if 'intel/psutil/net/bytes_recv' in telemetry_data and 'intel/psutil/net/bytes_sent' in telemetry_data:
-            nic = self.telemetry._nic(node)
-            cmd = 'cat'
-            cmd_param = '/sys/class/net/' + nic + '/speed'
-            nic_speed = int(subprocess.check_output([cmd, cmd_param])) * 1000000
+            source= self.telemetry._source(node)
+            machine = InfoGraphNode.get_node(self.internal_graph, source)
+            nic_speed = InfoGraphNode.get_nic_speed_mbps(machine) * 1000000
             net_data = telemetry_data.filter(['timestamp', 'intel/psutil/net/bytes_recv','intel/psutil/net/bytes_sent'], axis=1)
             net_data.fillna(0)
             net_data['intel/psutil/net/bytes_total'] = net_data['intel/psutil/net/bytes_recv']+net_data['intel/psutil/net/bytes_sent']
@@ -228,6 +226,45 @@ class TelemetryAnnotation(object):
             net_data_interval['intel/psutil/net/utilization_percentage'] = net_data_interval['intel/psutil/net/bytes_total'] * 100 /nic_speed
             net_data_pct = pandas.DataFrame(net_data_interval['intel/psutil/net/utilization_percentage'])
             InfoGraphNode.set_network_utilization(node, net_data_pct)
+        if 'intel/docker/stats/cgroups/cpu_stats/cpu_usage/total' in telemetry_data:
+            # Container node
+            #cpu util
+            cpu_data = telemetry_data.filter(['timestamp', 'intel/docker/stats/cgroups/cpu_stats/cpu_usage/total'], axis=1)
+            cpu_data_interval = cpu_data.set_index('timestamp').diff()
+            #util data in nanoseconds
+            cpu_data_interval['intel/docker/stats/cgroups/cpu_stats/cpu_usage/percentage'] = cpu_data_interval['intel/docker/stats/cgroups/cpu_stats/cpu_usage/total'] / 10000000
+            cpu_data_pct = pandas.DataFrame(cpu_data_interval['intel/docker/stats/cgroups/cpu_stats/cpu_usage/percentage'])
+            InfoGraphNode.set_compute_utilization(node, cpu_data_pct)
+        if "intel/docker/stats/cgroups/memory_stats/usage/usage" in telemetry_data:
+            #container mem util
+            source= self.telemetry._source(node)
+            machine = InfoGraphNode.get_node(self.internal_graph, source)
+            local_mem = int(InfoGraphNode.get_attributes(machine).get("local_memory"))
+            mem_data = telemetry_data.filter(['timestamp', "intel/docker/stats/cgroups/memory_stats/usage/usage"], axis=1)
+            mem_data["intel/docker/stats/cgroups/memory_stats/usage/percentage"] = mem_data["intel/docker/stats/cgroups/memory_stats/usage/usage"]/local_mem * 100
+            mem_data_pct = pandas.DataFrame(mem_data["intel/docker/stats/cgroups/memory_stats/usage/percentage"])
+            InfoGraphNode.set_memory_utilization(node, mem_data_pct)
+        if "intel/docker/stats/network/tx_bytes" in telemetry_data:
+            #container network util
+            source= self.telemetry._source(node)
+            machine = InfoGraphNode.get_node(self.internal_graph, source)
+            nic_speed = InfoGraphNode.get_nic_speed_mbps(machine) * 1000000
+            net_data = telemetry_data.filter(['timestamp', "intel/docker/stats/network/tx_bytes","intel/docker/stats/network/rx_bytes"], axis=1)
+            net_data.fillna(0)
+            net_data['intel/docker/stats/network/bytes_total'] = net_data["intel/docker/stats/network/tx_bytes"]+net_data["intel/docker/stats/network/rx_bytes"]
+            net_data_interval = net_data.set_index('timestamp').diff()
+            net_data_interval['intel/docker/stats/network/utilization_percentage'] = net_data_interval['intel/docker/stats/network/bytes_total'] * 100 /nic_speed
+            net_data_pct = pandas.DataFrame(net_data_interval['intel/docker/stats/network/utilization_percentage'])
+            InfoGraphNode.set_network_utilization(node, net_data_pct)
+        if "intel/docker/stats/cgroups/blkio_stats/io_time_recursive/value" in telemetry_data:
+            #container disk util
+            disk_data = telemetry_data.filter(['timestamp', "intel/docker/stats/cgroups/blkio_stats/io_time_recursive/value"], axis=1)
+            disk_data_interval = disk_data.set_index('timestamp').diff()
+            #util data in milliseconds
+            disk_data_interval["intel/docker/stats/cgroups/blkio_stats/io_time_recursive/percentage"] = \
+                disk_data_interval["intel/docker/stats/cgroups/blkio_stats/io_time_recursive/value"] / 1000000
+            disk_data_pct = pandas.DataFrame(disk_data_interval["intel/docker/stats/cgroups/blkio_stats/io_time_recursive/percentage"])
+            InfoGraphNode.set_disk_utilization(node, disk_data_pct)
 
 
     def _saturation(self, node, telemetry_data):

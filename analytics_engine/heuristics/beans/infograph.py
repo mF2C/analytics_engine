@@ -65,6 +65,7 @@ class InfoGraphNodeType():
     VIRTUAL_SWITCH = 'switch'
 
     SERVICE_COMPUTE = 'stack'
+    DOCKER_CONTAINER = 'docker_container'
     # SERVICE_NETWORK = 'OS::Neutron::Port'
     # # SERVICE_VOLUME = 'OS::Cinder::Volume'
     # SERVICE_VOLUME = 'OS::Cinder::VolumeAttachment'
@@ -480,6 +481,27 @@ class InfoGraphNode(object):
             return InfoGraphNode.get_name(node).split('_')[0]
         return None
 
+    @staticmethod
+    def get_nic_speed_mbps(node):
+        if InfoGraphNode.node_is_machine(node):
+            nic_speed_str = InfoGraphNode.get_attributes(node).get("nicspeedmbps")
+            if nic_speed_str:
+                return int(nic_speed_str)
+            else:
+                return 100  #default to 100mbps
+
+
+    @staticmethod
+    def get_docker_id(node):
+        if InfoGraphNode.get_type(node) == InfoGraphNodeType.DOCKER_CONTAINER:
+            #return "7985896f2336"
+            attrs = InfoGraphNode.get_attributes(node)
+            while attrs.get('attributes', None):
+                attrs = attrs['attributes']
+            if 'Hostname' in attrs:
+                return attrs['Hostname']
+
+
 class InfoGraphUtilities():
 
     @staticmethod
@@ -641,3 +663,4 @@ class InfoGraphUtilities():
                 for virtual_resource in virtual_resources:
                     res[hostname].append(virtual_resource)
         return res
+
