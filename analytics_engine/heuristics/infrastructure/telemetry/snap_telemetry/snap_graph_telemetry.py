@@ -235,8 +235,9 @@ class SnapAnnotation(GraphTelemetry):
                 return attrs['name']
         if InfoGraphNode.get_type(node) == NODE_TYPE.DOCKER_CONTAINER:
             docker_node = self.landscape.get_neighbour_by_type(InfoGraphNode.get_name(node),'docker_node')
-            machine = self.landscape.get_neighbour_by_type(docker_node,'machine')
-            return machine
+            if docker_node:
+                machine = self.landscape.get_neighbour_by_type(docker_node,'machine')
+                return machine
         return None
 
     def _disk(self, node):
