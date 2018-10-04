@@ -100,8 +100,13 @@ def analyse():
         recipe = recipes[recipe_id]
         if recipe._ts_from == int(params.get('ts_from')) and recipe._ts_to == int(params.get('ts_to')):
             reuse = True
+            break
     if not workload or not reuse:
+        recipe = request.get_json()
+        recipe_bean = Recipe()
+        recipe_bean.from_json(recipe)
         workload = Workload(service_id, int(params['ts_from']), int(params['ts_to']))
+        workload.add_recipe(int("{}{}".format(int(round(time.time())), '000000000')), recipe_bean)
     else:
         LOG.info("Reusing existing analysis")
     pipe_exec = AnalysePipe()

@@ -2,8 +2,15 @@ import requests
 import json
 headers = {'Content-type': 'application/json', 'Accept': 'text/json'}
 # data=json.dumps(payload)
-service_json = {'service_id': 'helloworld',  "ts_from":'1538561270',  "ts_to":'1538561280',
-               'category': {"cpu": 'low',
+service_json = {'service_id': 'helloworld',
+                "name": "helloworld",
+                #"ts_from":'1538561300',
+                #"ts_to":'1538561400',
+                "description": "test workload",
+                "resourceURI": '/helloworld',
+                "exec": 'helloworld',
+                "exec_type": 'docker',
+                'category': {"cpu": 'low',
                             "memory": 'low',
                             "disk": 'low',
                             "network": 'low',
