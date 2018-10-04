@@ -1,11 +1,11 @@
 import requests
 import time
 import json
-json_recipe = {
+service_json = {
     "name": 'helloworld',
     "description": 'test workload',
-    "ts_from":'1536916504',
-    "ts_to":'1536916604',
+    "ts_from":'1537972500',
+    "ts_to":'1537972505',
     "resourceURI": '/helloworld',
     "exec": 'helloworld',
     "exec_type":'docker',
@@ -32,10 +32,10 @@ headers = {'Content-type': 'application/json', 'Accept': 'text/json'}
 # data=json.dumps(payload)
 url = 'http://localhost:46020/mf2c/optimal'
 print time.time()
-res = requests.post(url, json=json_recipe, headers=headers)
+res = requests.post(url, json=service_json, headers=headers)
 if res.ok:
     print time.time()
-    print 'Analysis Done'
+    print 'Optimal hosts'
     json_data = json.loads(res.text)
     print json_data
 

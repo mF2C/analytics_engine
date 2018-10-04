@@ -495,11 +495,8 @@ class InfoGraphNode(object):
     def get_docker_id(node):
         if InfoGraphNode.get_type(node) == InfoGraphNodeType.DOCKER_CONTAINER:
             #return "7985896f2336"
-            attrs = InfoGraphNode.get_attributes(node)
-            while attrs.get('attributes', None):
-                attrs = attrs['attributes']
-            if 'Hostname' in attrs:
-                return attrs['Hostname']
+            node_name = InfoGraphNode.get_name(node)
+            return node_name[:12]
 
 
 class InfoGraphUtilities():

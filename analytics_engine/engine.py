@@ -29,6 +29,7 @@ from analytics_engine.heuristics.pipes.mf2c.refine_recipe_pipe import RefineReci
 from analytics_engine.heuristics.sinks.mf2c.rest_api_sink import RestiAPI
 from analytics_engine.utilities import misc as utils
 from analytics_engine.utilities.misc import Validation
+import time
 
 LOG = common.LOG
 
@@ -45,8 +46,12 @@ class Engine:
         # required initialization
         # Init Common
         self._setup_framework_base_directory()
-        self.workload = Workload(workload_name, ts_from, ts_to, config, config_type)
         self.pipe = pipe
+        if pipe == 'optimal':
+            ts_from = 0
+            ts_to = 0
+            workload_name = pipe+"_"+str(int(time.time()))
+        self.workload = Workload(workload_name, ts_from, ts_to, config, config_type)
         self.analysis_id = analysis_id
 
     def run(self):

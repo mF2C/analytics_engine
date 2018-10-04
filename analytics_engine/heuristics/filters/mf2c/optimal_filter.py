@@ -69,9 +69,11 @@ class OptimalFilter(Filter):
                                                     'disk utilization': scores[node_name]['disk'],
                                                     'disk saturation': scores_sat[node_name]['disk']},
                                                     ignore_index=True)
-            if InfoGraphNode.get_type(node) == "docker_container":
-                node_name = InfoGraphNode.get_docker_id(node)
-                heuristic_results = heuristic_results.append({'node_name': node_name,
+
+            if not workload.get_workload_name().startswith('optimal_'):
+                if InfoGraphNode.get_type(node) == "docker_container":
+                    node_name = InfoGraphNode.get_docker_id(node)
+                    heuristic_results = heuristic_results.append({'node_name': node_name,
                                                     'type': node_type,
                                                     'ipaddress': None,
                                                     'compute utilization': scores[node_name]['compute'],

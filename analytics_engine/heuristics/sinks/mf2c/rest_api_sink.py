@@ -22,6 +22,7 @@ __status__ = "Development"
 import os
 import threading
 import analytics_engine.common as common
+import time
 from analytics_engine.heuristics.sinks.base import Sink
 LOG = common.LOG
 LOCAL_RES_DIR = os.path.join(common.INSTALL_BASE_DIR, "exported_data")
@@ -61,15 +62,17 @@ def get_optimal():
     recipe = request.get_json()
     LOG.info(recipe)
     LOG.info(str(recipe['name']))
-    if 'ts_from' in recipe:
-        LOG.debug(recipe['ts_from'])
-        LOG.debug(recipe['ts_to'])
-        workload = Workload(str(recipe['name']), ts_from= recipe['ts_from'], ts_to= recipe['ts_to'])
+    current_time = int(time.time())
+    workload_name = 'optimal_'+str(current_time)
+    #if 'ts_from' in recipe:
+    #    LOG.debug(recipe['ts_from'])
+    #    LOG.debug(recipe['ts_to'])
+    #    workload = Workload(str(recipe['name']), ts_from= recipe['ts_from'], ts_to= recipe['ts_to'])
     # eng = Engine()
     # eng.run('optimal', recipe['name'], recipe['ts_from'], recipe['ts_to'])
-    else:
-        workload = Workload(str(recipe['name']))
-
+    #else:
+    #   workload = Workload(str(recipe['name']))
+    workload = Workload(workload_name)
     # storing initial recipe
     # TODO: validate recipe format
     recipe_bean = Recipe()
@@ -91,8 +94,16 @@ def analyse():
     LOG.info("Triggering analysis based on input service_id: {}".format(service_id))
     influx_sink = InfluxSink()
     workload = influx_sink.show((service_id, None))
-    if not workload:
+    recipes = workload.get_recipes()
+    reuse = False
+    for recipe_id in recipes:
+        recipe = recipes[recipe_id]
+        if recipe._ts_from == int(params.get('ts_from')) and recipe._ts_to == int(params.get('ts_to')):
+            reuse = True
+    if not workload or not reuse:
         workload = Workload(service_id, int(params['ts_from']), int(params['ts_to']))
+    else:
+        LOG.info("Reusing existing analysis")
     pipe_exec = AnalysePipe()
     workload = pipe_exec.run(workload)
     analysis_description = {
