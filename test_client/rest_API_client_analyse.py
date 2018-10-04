@@ -4,8 +4,8 @@ headers = {'Content-type': 'application/json', 'Accept': 'text/json'}
 # data=json.dumps(payload)
 service_json = {'service_id': 'helloworld',
                 "name": "helloworld",
-                #"ts_from":'1538561300',
-                #"ts_to":'1538561400',
+                "ts_from":'1538561300',
+                "ts_to":'1538561400',
                 "description": "test workload",
                 "resourceURI": '/helloworld',
                 "exec": 'helloworld',
