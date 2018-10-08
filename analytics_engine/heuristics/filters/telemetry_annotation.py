@@ -24,6 +24,7 @@ from analytics_engine import common
 from analytics_engine.heuristics.beans.infograph import \
     InfoGraphNode, InfoGraphUtilities, InfoGraphNodeType, InfoGraphNodeLayer
 from analytics_engine.heuristics.infrastructure.telemetry.snap_telemetry.snap_graph_telemetry import SnapAnnotation
+from analytics_engine.heuristics.infrastructure.telemetry.prometheus.prometheus_annotation import PrometheusAnnotation
 from analytics_engine.heuristics.infrastructure.telemetry.snap_telemetry.snap_utils import SnapUtils
 from analytics_engine.utilities import misc
 
@@ -44,6 +45,8 @@ class TelemetryAnnotation(object):
 
         if telemetry_system == "snap":
             self.telemetry = SnapAnnotation()
+        elif telemetry_system == "prometheus":
+            self.telemetry = PrometheusAnnotation()
         else:
             self.telemetry = None
 
@@ -96,6 +99,33 @@ class TelemetryAnnotation(object):
                             SnapUtils.annotate_machine_network_util(internal_graph, node)
                     if saturation:
                         SnapUtils.saturation(internal_graph, node, self.telemetry)
+            elif isinstance(self.telemetry, PrometheusAnnotation):
+                queries = list()
+                try:
+                    queries = self.telemetry.get_queries(internal_graph, node, ts_from, ts_to)
+                    # queries = self.telemetry.get_queries(graph, node, ts_from, ts_to)
+                except Exception as e:
+                    LOG.error("Exception: {}".format(e))
+                    LOG.error(e)
+                    import traceback
+                    traceback.print_exc()
+                if len(queries) != 0:
+                    InfoGraphNode.set_queries(node, queries)
+
+                    telemetry_data = self.telemetry.get_data(node)
+                    InfoGraphNode.set_telemetry_data(node, telemetry_data)
+                    # if utilization and not telemetry_data.empty:
+                        #PrometheusUtils.utilization(internal_graph, node, self.telemetry)
+                        # if only procfs is available, results needs to be
+                            # propagated at machine level
+                        #if InfoGraphNode.get_type(node) == InfoGraphNodeType.PHYSICAL_PU:
+                        #    PrometheusUtils.annotate_machine_pu_util(internal_graph, node)
+                        #if InfoGraphNode.node_is_disk(node):
+                        #    PrometheusUtils.annotate_machine_disk_util(internal_graph, node)
+                        #if InfoGraphNode.node_is_nic(node):
+                        #    PrometheusUtils.annotate_machine_network_util(internal_graph, node)
+                    #if saturation:
+                        #PrometheusUtils.saturation(internal_graph, node, self.telemetry)
             else:
                 telemetry_data = self.telemetry.get_data(node)
                 InfoGraphNode.set_telemetry_data(node, telemetry_data)

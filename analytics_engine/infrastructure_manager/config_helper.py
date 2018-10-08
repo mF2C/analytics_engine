@@ -40,6 +40,8 @@ class ConfigHelper:
         """
         if ConfigHelper._CONFIG is None:
             ConfigHelper._setup()
+        elif section == 'DEFAULT':
+            return ConfigHelper._CONFIG.defaults().get(attribute)
         return ConfigHelper._CONFIG.get(section, attribute)
 
 

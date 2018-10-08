@@ -24,6 +24,7 @@ from analytics_engine.heuristics.filters.subgraph_filter import SubgraphFilter
 from analytics_engine.heuristics.filters.graph_filter import GraphFilter
 from analytics_engine.heuristics.filters.subgraph_annotated_filter import SubgraphAnnotatedFilter
 from analytics_engine.heuristics.filters.subgraph_filtered_telemetry_filter import SubgraphFilteredTelemetryFilter
+from analytics_engine.infrastructure_manager.config_helper import ConfigHelper
 from analytics_engine.heuristics.sinks.file_sink import FileSink
 from analytics_engine.heuristics.pipes.base import Pipe
 LOG = common.LOG
@@ -38,6 +39,9 @@ class AnnotatedTelemetryPipe(Pipe):
     :return: workload decorated with the annotated graph (landscape and telemetry).
     """
     def run(self, workload):
+        telemetry_system = ConfigHelper.get("DEFAULT","telemetry")
+        if not telemetry_system:
+            telemetry_system = 'snap'
         if not workload:
             raise IOError('A workload needs to be specified')
         # testing purposes
@@ -51,7 +55,7 @@ class AnnotatedTelemetryPipe(Pipe):
             graph_filter = GraphFilter()
             graph_filter.run(workload)
         sub_filter_ann = SubgraphAnnotatedFilter()
-        sub_filter_ann.run(workload)
+        sub_filter_ann.run(workload, telemetry_system)
         # sub_filter_ann_filtered = SubgraphFilteredTelemetryFilter()
         # sub_filter_ann_filtered.run(workload)
         fs = FileSink()

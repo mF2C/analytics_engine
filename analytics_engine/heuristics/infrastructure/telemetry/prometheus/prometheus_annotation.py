@@ -25,21 +25,26 @@ import sys
 import pandas
 import requests
 from analytics_engine import common
+from analytics_engine.infrastructure_manager.config_helper import ConfigHelper
 from analytics_engine.heuristics.beans.infograph import InfoGraphNode
 from analytics_engine.heuristics.beans.infograph import InfoGraphNodeLayer
 from analytics_engine.heuristics.beans.infograph import InfoGraphNodeLayer as GRAPH_LAYER
 from analytics_engine.heuristics.beans.infograph import InfoGraphNodeType as NODE_TYPE
 from analytics_engine.heuristics.infrastructure.telemetry.graph_telemetry import GraphTelemetry
+from metric_conf import NODE_TO_METRIC_TAGS
+from metric_conf import NODE_METRICS
 
 LOG = common.LOG
 
 class PrometheusAnnotation(GraphTelemetry):
 
-    def __init__(self, tsdb_ip, tsdb_port):
-        PrometheusAnnotation._validateIPAddress(common.PROMETHEUS_HOST)
-        PrometheusAnnotation._validatePortNumber(common.PROMETHEUS_PORT)
-        self.tsdb_ip = common.PROMETHEUS_HOST
-        self.tsdb_port = common.PROMETHEUS_PORT
+    def __init__(self):
+        PROMETHEUS_HOST = ConfigHelper.get("PROMETHEUS", "PROMETHEUS_HOST")
+        PROMETHEUS_PORT = ConfigHelper.get("PROMETHEUS", "PROMETHEUS_PORT")
+        PrometheusAnnotation._validateIPAddress(PROMETHEUS_HOST)
+        PrometheusAnnotation._validatePortNumber(PROMETHEUS_PORT)
+        self.tsdb_ip = PROMETHEUS_HOST
+        self.tsdb_port = PROMETHEUS_PORT
         self.metrics = {}
 
     def get_data(self, node):
@@ -52,7 +57,7 @@ class PrometheusAnnotation(GraphTelemetry):
         ret_val = pandas.DataFrame()
         try:
            ret_val = self._get_data(queries)
-        except:
+        except Exception as ex:
             LOG.debug("Exception in user code: \n{} {} {}".format(
                 '-' * 60), traceback.print_exc(file=sys.stdout), '-' * 60)
         ret_val.set_index(keys='timestamp')
@@ -142,7 +147,6 @@ class PrometheusAnnotation(GraphTelemetry):
         res = pandas.DataFrame()
         res['timestamp'] = pandas.Series()
         res.set_index('timestamp')
-        res.sort(columns='timestamp', ascending=True)
 
         for resource, results in metrics_data.iteritems():
             for result in results: # metrics_data[resource]
@@ -169,6 +173,7 @@ class PrometheusAnnotation(GraphTelemetry):
                             df = pandas.DataFrame({'timestamp': timestamp,
                                                    metric_name: metric})
                             res = pandas.merge(res, df, how='outer', on='timestamp')
+        res.sort_values(by='timestamp', ascending=True)
         return res
 
     def _get_metrics(self, node):
@@ -185,8 +190,8 @@ class PrometheusAnnotation(GraphTelemetry):
 #        if node_type != 'cache' and node_type != 'pcidev':
 #            dummy = 1
 
-        if node_type in PrometheusAnnotation.NODE_METRICS:
-            metrics = PrometheusAnnotation.NODE_METRICS[node_type]
+        if node_type in NODE_METRICS:
+            metrics = NODE_METRICS[node_type]
         LOG.debug("METRICS: {}".format(metrics))
         return metrics
 
@@ -219,8 +224,8 @@ class PrometheusAnnotation(GraphTelemetry):
         tag_keys +=  ["instance"]
 
         node_type = InfoGraphNode.get_type(node)
-        if node_type in PrometheusAnnotation.NODE_TO_METRIC_TAGS:
-            tag_keys = PrometheusAnnotation.NODE_TO_METRIC_TAGS[node_type]
+        if node_type in NODE_TO_METRIC_TAGS:
+            tag_keys = NODE_TO_METRIC_TAGS[node_type]
 
         return tag_keys
 
