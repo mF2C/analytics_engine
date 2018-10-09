@@ -94,7 +94,9 @@ def analyse():
     LOG.info("Triggering analysis based on input service_id: {}".format(service_id))
     influx_sink = InfluxSink()
     workload = influx_sink.show((service_id, None))
-    recipes = workload.get_recipes()
+    recipes = {}
+    if workload:
+        recipes = workload.get_recipes()
     reuse = False
     for recipe_id in recipes:
         recipe = recipes[recipe_id]
