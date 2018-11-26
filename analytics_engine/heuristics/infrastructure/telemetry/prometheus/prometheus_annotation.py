@@ -60,7 +60,7 @@ class PrometheusAnnotation(GraphTelemetry):
         except Exception as ex:
             LOG.debug("Exception in user code: \n{} {} {}".format(
                 '-' * 60), traceback.print_exc(file=sys.stdout), '-' * 60)
-        ret_val.set_index(keys='timestamp')
+        #ret_val.set_index(keys='timestamp')
         return ret_val
 
     def get_queries(self, graph, node, ts_from, ts_to):
@@ -132,8 +132,9 @@ class PrometheusAnnotation(GraphTelemetry):
                 retries = 0
                 while retries < 3: # Cimarron.RETRIES: # ++++
                     try:
+                        print full_request
                         req = requests.get(full_request,
-                                           timeout=3) # Cimarron.TIMEOUT) # ++++
+                                           timeout=30) # Cimarron.TIMEOUT) # ++++
                         if req.status_code == 200:
                             metrics_data[resource].append(req.json())
                         break
@@ -147,7 +148,8 @@ class PrometheusAnnotation(GraphTelemetry):
         res = pandas.DataFrame()
         res['timestamp'] = pandas.Series()
         res.set_index('timestamp')
-
+        dfs = []
+        mnames = {}
         for resource, results in metrics_data.iteritems():
             for result in results: # metrics_data[resource]
                 if result['status'] == 'success':
@@ -160,19 +162,36 @@ class PrometheusAnnotation(GraphTelemetry):
                             for k, v in result_metric['metric'].iteritems():
                                 metric_name = metric_name + ';' + k + ':' + v
 
+                            if mnames.get(metric_name):
+                                print metric_name
+                                print result_metric['metric']
+                                continue
+                            else:
+                                mnames[metric_name] = 'Exists'
                             values = result_metric['values']
                             LOG.debug("adding {}, size {} to dataframe".format(metric_name, len(values)) )
 
-                            df = pandas.DataFrame(columns=('timestamp', metric_name))
-                            df.set_index('timestamp')
-                            timestamp = list()
-                            metric = list()
-                            for [ts, val] in values:
-                                timestamp.append(ts)
-                                metric.append(val)
-                            df = pandas.DataFrame({'timestamp': timestamp,
-                                                   metric_name: metric})
-                            res = pandas.merge(res, df, how='outer', on='timestamp')
+                            df = pandas.DataFrame(values, columns=["timestamp", metric_name])
+
+                            #df = pandas.DataFrame(columns=('timestamp', metric_name))
+                            #df.set_index('timestamp')
+                            #timestamp = list()
+                            #metric = list()
+                            #for [ts, val] in values:
+                            #    timestamp.append(ts)
+                            #    metric.append(val)
+                            #df = pandas.DataFrame({'timestamp': timestamp,
+                            #                       metric_name: metric})
+                            dfs.append(df)
+                            #if res.empty:
+                            #    res = df.copy()
+                            #else:
+                            #    res = pandas.merge(res, df, how='outer', on='timestamp')
+        dfs = [df.set_index('timestamp') for df in dfs]
+        if len(dfs) > 0:
+            res = dfs[0]
+        if len(dfs) > 1:
+            res = dfs[0].join(dfs[1:], how='outer')
         res.sort_values(by='timestamp', ascending=True)
         return res
 
