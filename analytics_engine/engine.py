@@ -24,7 +24,7 @@ from analytics_engine import common as common
 from analytics_engine.heuristics.beans.workload import Workload
 from analytics_engine.heuristics.pipes.annotated_telemetry_pipe import AnnotatedTelemetryPipe
 from analytics_engine.heuristics.pipes.mf2c.avg_heuristic import AvgHeuristicPipe
-from analytics_engine.heuristics.pipes.mf2c.optimal_pipe import OptimalPipe
+from analytics_engine.heuristics.pipes.optimal_pipe import OptimalPipe
 from analytics_engine.heuristics.pipes.mf2c.refine_recipe_pipe import RefineRecipePipe
 from analytics_engine.heuristics.sinks.mf2c.rest_api_sink import RestiAPI
 from analytics_engine.utilities import misc as utils
