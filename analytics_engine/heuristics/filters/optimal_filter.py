@@ -32,7 +32,7 @@ class OptimalFilter(Filter):
 
     __filter_name__ = 'optimal_filter'
 
-    def run(self, workload):
+    def run(self, workload, optimal_node_type='machine'):
         """
         Ranks machines by CPU utilization.
 
@@ -56,7 +56,7 @@ class OptimalFilter(Filter):
         for node in graph.nodes(data=True):
             node_name = InfoGraphNode.get_name(node)
             node_type = InfoGraphNode.get_type(node)
-            if node_type == "machine":
+            if node_type == optimal_node_type:
                 heuristic_results = heuristic_results.append({'node_name': node_name,
                                                     'type': node_type,
                                                     'ipaddress': InfoGraphNode.get_attributes(node).get('ipaddress'), 
@@ -71,7 +71,7 @@ class OptimalFilter(Filter):
                                                     ignore_index=True)
 
             if not workload.get_workload_name().startswith('optimal_'):
-                if InfoGraphNode.get_type(node) == "docker_container":
+                if InfoGraphNode.get_type(node) == "docker_container" and optimal_node_type == 'machine':
                     node_name = InfoGraphNode.get_docker_id(node)
                     heuristic_results = heuristic_results.append({'node_name': node_name,
                                                     'type': node_type,

@@ -20,7 +20,7 @@ __email__ = "giuliana.carullo@intel.com"
 __status__ = "Development"
 
 
-from analytics_engine.heuristics.filters.mf2c.optimal_filter import OptimalFilter
+from analytics_engine.heuristics.filters.optimal_filter import OptimalFilter
 from analytics_engine.data_analytics.mf2c.refine_recipe import RefineRecipe
 from analytics_engine import common
 import time
