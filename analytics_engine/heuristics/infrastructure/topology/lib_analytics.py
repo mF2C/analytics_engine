@@ -40,7 +40,7 @@ TELEMETRY_TYPE_SNAP = "snap"
 MILLISECONDS = 10
 MINUTES_TF = 1
 
-PARALLEL = True
+PARALLEL = False
 
 class SubGraphExtraction(object):
 
@@ -117,12 +117,26 @@ class SubGraphExtraction(object):
 
         return res
 
+    def get_hist_service_nodes(self, service_type, name):
+        '''
+
+        :param service_type: 'stack' or 'service'
+        :param name: name of service or stack
+        :return: graph
+        '''
+        prop_name = "stack_name"
+        if service_type == 'service':
+            prop_name = 'service_name'
+        properties = [(prop_name, name)]
+        res = landscape.get_service_instance_hist_nodes(properties)
+        return res
+
     def _get_workload_subgraph(self, stack_name, ts_from=None, ts_to=None):
         res = None
         try:
             # Get the node ID for the stack_name and query the landscape
 
-            properties = ["stack_name", stack_name]
+            properties = [("stack_name", stack_name),]
             try:
                 time_window = ts_to - ts_from
             except:
@@ -133,7 +147,7 @@ class SubGraphExtraction(object):
             if not landscape_res:
                 LOG.info("No graph for a stack returned from analytics")
                 # try a service name
-                properties = ["service_name", stack_name]
+                properties = [("service_name", stack_name),]
                 landscape_res = landscape.get_node_by_properties(
                     properties, ts_from, time_window)
                 if not landscape_res:
@@ -270,6 +284,7 @@ class SubgraphUtilities(object):
                 attrs = InfoGraphUtilities.str_to_dict(attrs)
                 InfoGraphNode.set_attributes(node, attrs)
         return res
+
 
     @staticmethod
     def graph_telemetry_annotation(graph, ts_from, ts_to, telemetry_type='snap'):
