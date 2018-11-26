@@ -131,6 +131,18 @@ def get_node_by_properties(properties, start=None, timeframe=0):
     return infograph.get_info_graph(landscape=nx_prop_graph)
 
 
+def get_service_instance_hist_nodes(properties):
+    response = _get("/service_instances", params={"properties": properties})
+    response.raise_for_status()
+    nx_prop_graph = json_graph.node_link_graph(response.json())
+    return infograph.get_info_graph(landscape=nx_prop_graph)
+
+def get_service_instance_hist_subgraphs(properties):
+    response = _get("/service_instances", params={"properties": properties})
+    response.raise_for_status()
+    nx_prop_graph = json_graph.node_link_graph(response.json())
+    return infograph.get_info_graph(landscape=nx_prop_graph)
+
 def _get(path, params=None):
     """
     Builds the uri to the service and then retrieves from the host.
@@ -146,6 +158,7 @@ def _get(path, params=None):
                 continue
             uri += "{}={}&".format(param_name, param)
         uri = uri[:len(uri)]  # Remove ? or & from the  end of query string
+        LOG.debug(uri)
     return requests.get(uri)
 
 
