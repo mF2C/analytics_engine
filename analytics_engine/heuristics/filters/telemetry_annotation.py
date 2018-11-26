@@ -202,6 +202,10 @@ class TelemetryAnnotation(object):
             node_layer = InfoGraphNode.get_layer(node)
             node_type = InfoGraphNode.get_type(node)
 
+            if node_type == 'vm':
+                node_attrs = InfoGraphNode.get_attributes(node)
+                node_name = node_attrs['vm_name'] if node_attrs.get('vm_name') else node_name
+
             # This method supports export of either normal metrics coming
             #  from telemetry agent or utilization type of metrics.
             if metrics == 'all':
@@ -214,23 +218,30 @@ class TelemetryAnnotation(object):
             #     InfoGraphNode.get_name(node),
             #     InfoGraphNode.get_telemetry_data(node).columns.values
             # ))
-
+            if isinstance(node_telemetry_data, pandas.DataFrame):
+                if node_telemetry_data.empty:
+                    continue
+                node_telemetry_data = node_telemetry_data.reset_index()
+            else:
+                continue
+            node_telemetry_data['timestamp'] = node_telemetry_data['timestamp'].astype(
+                float)
+            node_telemetry_data['timestamp'] = node_telemetry_data['timestamp'].round()
+            node_telemetry_data['timestamp'] = node_telemetry_data['timestamp'].astype(
+                int)
+            renames = {}
             for metric_name in node_telemetry_data.columns.values:
                 if metric_name == 'timestamp':
                     continue
                 col_name = "{}@{}@{}@{}".\
                     format(node_name, node_layer, node_type, metric_name)
                 col_name = col_name.replace(".", "_")
-                node_telemetry_data = node_telemetry_data.rename(
-                    columns={metric_name: col_name})
+                renames[metric_name] = col_name
+            node_telemetry_data = node_telemetry_data.rename(
+                columns=renames)
 
                 # LOG.info("TELEMETRIA: {}".format(node_telemetry_data.columns.values))
 
-                node_telemetry_data['timestamp'] = node_telemetry_data['timestamp'].astype(
-                    float)
-                node_telemetry_data['timestamp'] = node_telemetry_data['timestamp'].round()
-                node_telemetry_data['timestamp'] = node_telemetry_data['timestamp'].astype(
-                    int)
             if node_telemetry_data.empty or len(node_telemetry_data.columns) <= 1:
                 continue
             if result.empty:
