@@ -24,7 +24,8 @@ from analytics_engine.heuristics.filters.mf2c.analyse_and_refine_recipe_filter i
 from analytics_engine.heuristics.pipes.annotated_telemetry_pipe import AnnotatedTelemetryPipe
 from analytics_engine.heuristics.sinks.file_sink import FileSink
 from analytics_engine.heuristics.sinks.mf2c.influx_sink import InfluxSink
-
+from analytics_engine.heuristics.filters.cimi_filter import CimiFilter
+import time
 
 LOG = common.LOG
 
@@ -44,6 +45,10 @@ class AnalysePipe(AnnotatedTelemetryPipe):
             raise IOError('A workload needs to be specified')
         # retrieving other informations. Recipe needed
         # TODO: mainstain consistency with the old a new landscape when saving
+        recipe = workload.get_latest_recipe()
+        cimi_filter = CimiFilter()
+        recipe = cimi_filter.run(recipe)
+        workload.add_recipe(int("{}{}".format(int(round(time.time())), '000000000')), recipe)
         super(AnalysePipe, self).run(workload)
         avg_analyse = AnalyseAndRefineRecipeFilter()
         workload = avg_analyse.run(workload)

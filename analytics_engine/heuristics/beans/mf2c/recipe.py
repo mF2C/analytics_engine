@@ -31,9 +31,10 @@ Models the recipe input for MF2C project.
 
 class Recipe(object):
 
-    def __init__(self, name=None, description=None, resourceURI=None,
+    def __init__(self, name=None, service_id=None, description=None, resourceURI=None,
                  exec_field = None, exec_type = None, ts_to = None, ts_from = None):
         self._name = name
+        self._service_id = service_id
         self._description = description
         self._resourceURI = resourceURI
         self._exec_field = exec_field
@@ -44,18 +45,7 @@ class Recipe(object):
             "cpu": None,
             "memory": None,
             "disk": None,
-            "network": None,
-            "inclinometer": False,
-            "temperature": False,
-            "jammer": False,
-            "location": False,
-            "battery level": False,
-            "door sensor": False,
-            "pump sensor": False,
-            "accelerometer": False,
-            "humidity": False,
-            "air_pressure": False,
-            "ir_motion": False
+            "network": None
         }
 
     def set_category(self, tag, value):
@@ -67,6 +57,7 @@ class Recipe(object):
     def to_json(self):
         json_recipe = {
                     u"name": self._name,
+                    u"service_id": self._service_id,
                     u"description": self._description,
                     u"ts_to": self._ts_to,
                     u"ts_from": self._ts_from,
@@ -77,18 +68,7 @@ class Recipe(object):
                         u"cpu": self._category['cpu'],
                         u"memory": self._category['memory'],
                         u"disk": self._category['disk'],
-                        u"network": self._category['network'],
-                        u"inclinometer": self._category['inclinometer'],
-                        u"temperature": self._category['temperature'],
-                        u"jammer": self._category['jammer'],
-                        u"location": self._category['location'],
-                        u"battery level": self._category['battery level'],
-                        u"door sensor": self._category['door sensor'],
-                        u"pump sensor": self._category['pump sensor'],
-                        u"accelerometer": self._category['accelerometer'],
-                        u"humidity": self._category['humidity'],
-                        u"air_pressure": self._category['air_pressure'],
-                        u"ir_motion": self._category['ir_motion']
+                        u"network": self._category['network']
                     }
 
                 }
@@ -100,35 +80,27 @@ class Recipe(object):
         LOG.info(json_data)
         try:
             # self._name = str(json_data['name'])
-            self._name= json_data['name'].encode("ascii")
+            self._name = json_data.get('name').encode("ascii")
         except:
             json_data = json.loads(json_data)
             # self._name = str(json_data['name'])
-            self._name = json_data['name'].encode("ascii")
-        self._description = json_data['description']
-        self._resourceURI = json_data['resourceURI']
-        self._exec_field = json_data['exec']
-        self._exec_type = json_data['exec_type']
+            self._name = json_data.get('name').encode("ascii")
+        self._service_id = json_data.get('service_id').encode("ascii")
+        self._description = json_data.get('description')
+        self._resourceURI = json_data.get('resourceURI')
+        self._exec_field = json_data.get('exec')
+        self._exec_type = json_data.get('exec_type')
         if 'ts_from' in json_data:
-            self._ts_to = int(json_data['ts_to'])
-            self._ts_from = int(json_data['ts_from'])
+            self._ts_to = int(json_data.get('ts_to'))
+            self._ts_from = int(json_data.get('ts_from'))
         else:
             self._ts_to = 0
             self._ts_from = 0
-        self._category = {
-            "cpu": json_data["category"]["cpu"],
-            "memory": json_data["category"]["memory"],
-            "disk": json_data["category"]["disk"],
-            "network": json_data["category"]["network"],
-            "inclinometer": json_data["category"]["inclinometer"],
-            "temperature": json_data["category"]["temperature"],
-            "jammer": json_data["category"]["jammer"],
-            "location": json_data["category"]["location"],
-            "battery level": json_data["category"]["battery level"],
-            "door sensor": json_data["category"]["door sensor"],
-            "pump sensor": json_data["category"]["pump sensor"],
-            "accelerometer": json_data["category"]["accelerometer"],
-            "humidity": json_data["category"]["humidity"],
-            "air_pressure": json_data["category"]["air_pressure"],
-            "ir_motion": json_data["category"]["ir_motion"]
-        }
+        category = json_data.get('category')
+        if category:
+            self._category = {
+                "cpu": category.get("cpu"),
+                "memory": category.get("memory"),
+                "disk": category.get("disk"),
+                "network": category.get("network")
+            }

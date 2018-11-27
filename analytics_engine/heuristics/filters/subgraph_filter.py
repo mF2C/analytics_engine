@@ -45,7 +45,7 @@ class SubgraphFilter(Filter):
             LOG.debug("Workload: {}".format(workload.get_workload_name()))
 
             subgraph = SubgraphUtilities.extract_workload_subgraphs(
-                        workload.get_workload_name(), workload.get_ts_from(), workload.get_ts_to())
+                        workload.get_service_name(), workload.get_ts_from(), workload.get_ts_to())
         except Exception as e:
                 LOG.error(e)
                 LOG.error("No topology data has been found for the selected "
