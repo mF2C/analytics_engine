@@ -25,12 +25,13 @@ from analytics_engine import common
 from analytics_engine.heuristics.beans.infograph import \
     InfoGraphNode, InfoGraphUtilities, InfoGraphNodeType, InfoGraphNodeLayer
 from analytics_engine.heuristics.infrastructure.telemetry.snap_telemetry.snap_graph_telemetry import SnapAnnotation
+from analytics_engine.heuristics.infrastructure.telemetry.prometheus.prometheus_annotation import PrometheusAnnotation
 from analytics_engine.utilities import misc
 import multiprocessing
 import threading
 import subprocess
 from analytics_engine.heuristics.infrastructure.telemetry.snap_telemetry.snap_utils import SnapUtils
-
+from analytics_engine.heuristics.infrastructure.telemetry.prometheus.prometheus_utils import PrometheusUtils
 
 LOG = common.LOG
 
@@ -52,8 +53,13 @@ class TelemetryAnnotation():
 
         if telemetry_system == "snap":
             self.telemetry = SnapAnnotation()
+            self.utils = SnapUtils()
+        elif telemetry_system == "prometheus":
+            self.telemetry = PrometheusAnnotation()
+            self.utils = PrometheusUtils()
         else:
-            self.telemetry = SnapLocal()
+            self.telemetry = SnapAnnotation()
+            self.utils = SnapUtils()
 
     def get_annotated_graph(self,
                             graph,
@@ -90,11 +96,11 @@ class TelemetryAnnotation():
 
         for node in internal_graph.nodes(data=True):
             if InfoGraphNode.get_type(node) == InfoGraphNodeType.PHYSICAL_PU:
-                SnapUtils.annotate_machine_pu_util(internal_graph, node)
+                self.utils.annotate_machine_pu_util(internal_graph, node)
             elif InfoGraphNode.node_is_disk(node):
-                SnapUtils.annotate_machine_disk_util(internal_graph, node)
+                self.utils.annotate_machine_disk_util(internal_graph, node)
             elif InfoGraphNode.node_is_nic(node):
-                SnapUtils.annotate_machine_network_util(internal_graph, node)
+                self.utils.annotate_machine_network_util(internal_graph, node)
         return internal_graph
 
 
@@ -151,14 +157,14 @@ class ParallelTelemetryAnnotation(threading.Thread):
                         # propagated at machine level
                     if saturation:
                         SnapUtils.saturation(self.internal_graph, node, self.telemetry)
-            else:
+            elif isinstance(self.telemetry, PrometheusAnnotation):
                 telemetry_data = self.telemetry.get_data(node)
                 InfoGraphNode.set_telemetry_data(node, telemetry_data)
                 if utilization and not telemetry_data.empty:
-                    SnapUtils.utilization(self.internal_graph, node, self.telemetry)
+                    self.utils.utilization(self.internal_graph, node, self.telemetry)
 
                 if saturation:
-                    SnapUtils.saturation(self.internal_graph, node, self.telemetry)
+                    self.utils.saturation(self.internal_graph, node, self.telemetry)
             self.telemetry_data = telemetry_data
         # return internal_graph
 
@@ -218,6 +224,11 @@ class ParallelTelemetryAnnotation(threading.Thread):
             #     InfoGraphNode.get_telemetry_data(node).columns.values
             # ))
 
+            node_telemetry_data['timestamp'] = node_telemetry_data['timestamp'].astype(
+                float)
+            node_telemetry_data['timestamp'] = node_telemetry_data['timestamp'].round()
+            node_telemetry_data['timestamp'] = node_telemetry_data['timestamp'].astype(
+                int)
             for metric_name in node_telemetry_data.columns.values:
                 if metric_name == 'timestamp':
                     continue
@@ -229,11 +240,6 @@ class ParallelTelemetryAnnotation(threading.Thread):
 
                 # LOG.info("TELEMETRIA: {}".format(node_telemetry_data.columns.values))
 
-                node_telemetry_data['timestamp'] = node_telemetry_data['timestamp'].astype(
-                    float)
-                node_telemetry_data['timestamp'] = node_telemetry_data['timestamp'].round()
-                node_telemetry_data['timestamp'] = node_telemetry_data['timestamp'].astype(
-                    int)
             if node_telemetry_data.empty or len(node_telemetry_data.columns) <= 1:
                 continue
             if result.empty:

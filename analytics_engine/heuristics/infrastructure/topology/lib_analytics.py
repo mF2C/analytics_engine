@@ -40,7 +40,7 @@ TELEMETRY_TYPE_SNAP = "snap"
 MILLISECONDS = 10
 MINUTES_TF = 1
 
-PARALLEL = False
+PARALLEL = True
 
 class SubGraphExtraction(object):
 

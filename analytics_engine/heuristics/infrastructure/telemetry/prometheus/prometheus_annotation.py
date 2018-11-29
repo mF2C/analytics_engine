@@ -79,6 +79,8 @@ class PrometheusAnnotation(GraphTelemetry):
             return queries
 
         for metric in self._get_metrics(node):
+            if metric == 'collectd_libvirt_if_errors_1':
+                print metric
             try:
                 query = self._build_query(metric, node, ts_from, ts_to)
             except Exception as e:
