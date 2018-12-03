@@ -52,7 +52,8 @@ class RefineRecipePipe(Pipe):
 
             # update cimi
             cimi_filter = CimiFilter()
-            cimi_filter.run(latest_recipe)
+            latest_recipe = cimi_filter.run(latest_recipe)
+            cimi_filter.refine(latest_recipe)
 
             LOG.info('Recipe: {}'.format(latest_recipe))
         else:

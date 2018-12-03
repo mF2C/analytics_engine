@@ -35,6 +35,13 @@ class RefineRecipe(object):
             recipe.set_category(tag=tag, value="medium")
         else:
             recipe.set_category(tag=tag, value="high")
+        #added by Sridhar Voorakkara
+        if isinstance(value, dict):
+            value = value.get(value.keys()[0])
+            if value < 1:
+                value = 1
+        if value:
+            recipe.set_category(tag=tag, value=value)
 
     @staticmethod
     def refine(recipe, conf):

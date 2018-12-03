@@ -122,7 +122,7 @@ class SubGraphExtraction(object):
         try:
             # Get the node ID for the stack_name and query the landscape
 
-            properties = ["stack_name", stack_name]
+            properties = [("stack_name", stack_name)]
             try:
                 time_window = ts_to - ts_from
             except:
@@ -133,7 +133,7 @@ class SubGraphExtraction(object):
             if not landscape_res:
                 LOG.info("No graph for a stack returned from analytics")
                 # try a service name
-                properties = ["service_name", stack_name]
+                properties = [("service_name", stack_name)]
                 landscape_res = landscape.get_node_by_properties(
                     properties, ts_from, time_window)
                 if not landscape_res:

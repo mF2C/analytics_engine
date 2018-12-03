@@ -38,9 +38,10 @@ class CimiFilter(Filter):
             if not recipe_json.get('name'):
                 service = cimiclient.get_service(service_id)
                 if service:
-                    recipe.name = service.get('name')
+                    recipe_json['name'] = service.get('name')
                 else:
-                    recipe.name = service_id
+                    recipe_json['name'] = service_id
+            recipe.from_json(recipe_json)
         elif recipe_json.get('name'):
             # get service from CIMI for finding the service id
             services = cimiclient.get_services_by_name(recipe_json['name'])
@@ -51,7 +52,7 @@ class CimiFilter(Filter):
                 LOG.info("No CIMI services found with the provided name. No CIMI update will be done!")
             else:
                 service = services[0]
-                recipe.service_id = service['id']
+                recipe.set_service_id(service['id'].replace('service/', ''))
         return recipe
 
     def refine(self, recipe):
@@ -61,6 +62,9 @@ class CimiFilter(Filter):
         if service_id:
             category = recipe_json.get("category")
             service_update = dict()
-            service_update['memory'] = category['memory']
+            service_update['memory_min'] = max(int(float(category['memory'])*10000), 100)
+            # TODO: Clean this up and use actual data from recipe
+
+            ########
             cimiclient.update_service(service_id, service_update)
             LOG.info("Refinement updated to CIMI")

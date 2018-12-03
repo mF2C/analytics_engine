@@ -23,6 +23,7 @@ import requests
 from analytics_engine.infrastructure_manager.config_helper import ConfigHelper as config
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from analytics_engine import common
+import json
 
 LOG = common.LOG
 CIMI_URL = config.get("CIMI", "url")
@@ -36,7 +37,7 @@ if CIMI_URL.lower().find('https') > 0:
 def get_services_by_name(name):
     uri = CIMI_URL+SERVICE_PATH
     if name and len(name) > 0:
-        uri = uri+'?{}'.format(_filter_url([{'name': name}]))
+        uri = uri+'?{}'.format(_filter_url([('name', '"{}"'.format(name))]))
     services = _get(uri).get('services')
     return services
 
@@ -60,6 +61,8 @@ def _get(path):
 
 
 def _put(path, content, params=None):
+    if isinstance(content, dict):
+        content = json.dumps(content)
     req = requests.put(path, content, headers=HEADERS,  verify=SSL_VERIFY)
     if req.status_code == 200:
         return True
@@ -76,11 +79,11 @@ def _filter_url(params):
     uri = ""
     if params:
         uri = "$filter="
-        for param_name, param in params.iteritems():
+        for param_name, param in params:
             if param is None:  # Skip parameters that are none.
                 continue
             uri += "{}={}&".format(param_name, param)
-        uri = uri[:len(uri)]  # Remove ? or & from the  end of query string
+        uri = uri[:len(uri)-1]  # Remove ? or & from the  end of query string
     return uri
 
 
@@ -88,9 +91,9 @@ def _sort_url(params):
     uri = ""
     if params:
         uri = "$orderby="
-        for param_name, param, sort_type in params.iteritems():
+        for param_name, param, sort_type in params:
             if param is None:  # Skip parameters that are none.
                 continue
             uri += "{}={}:{}&".format(param_name, param, sort_type)
-        uri = uri[:len(uri)]  # Remove ? or & from the  end of query string
+        uri = uri[:len(uri)-1]  # Remove ? or & from the  end of query string
     return uri

@@ -64,6 +64,7 @@ class Recipe(object):
                     u"resourceURI": self._resourceURI,
                     u"exec": self._exec_field,
                     u"exec_type": self._exec_type,
+                    u"service_id":self._service_id,
                     u"category": {
                         u"cpu": self._category['cpu'],
                         u"memory": self._category['memory'],
@@ -84,8 +85,8 @@ class Recipe(object):
         except:
             json_data = json.loads(json_data)
             # self._name = str(json_data['name'])
-            self._name = json_data.get('name').encode("ascii")
-        self._service_id = json_data.get('service_id').encode("ascii")
+            self._name = json_data.get('name').encode("ascii") if json_data.get('name') else None
+        self._service_id = json_data.get('service_id').encode("ascii") if json_data.get('service_id') else None
         self._description = json_data.get('description')
         self._resourceURI = json_data.get('resourceURI')
         self._exec_field = json_data.get('exec')
@@ -104,3 +105,12 @@ class Recipe(object):
                 "disk": category.get("disk"),
                 "network": category.get("network")
             }
+
+    def set_service_id(self, service_id):
+        self._service_id = service_id
+
+    def get_service_id(self):
+        if hasattr(self, "_service_id"):
+            return self._service_id
+        else:
+            return None

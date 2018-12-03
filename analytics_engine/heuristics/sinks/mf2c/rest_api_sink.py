@@ -90,10 +90,15 @@ def get_optimal():
 @app.route("/mf2c/analyse", methods=['GET', 'POST'])
 def analyse():
     params = request.get_json()
-    service_id = str(params['service_id'])
-    LOG.info("Triggering analysis based on input service_id: {}".format(service_id))
+    service_id = params.get('service_id')
+    name = params.get('name')
+    if service_id:
+        LOG.info("Triggering analysis based on input service_id: {}".format(service_id))
+    elif name:
+        LOG.info("Triggering analysis based on input service name: {}".format(name))
+    id = str(service_id) if service_id else str(name)
     influx_sink = InfluxSink()
-    workload = influx_sink.show((service_id, None))
+    workload = influx_sink.show((id, None))
     recipes = {}
     if workload:
         recipes = workload.get_recipes()
@@ -107,14 +112,16 @@ def analyse():
         recipe = request.get_json()
         recipe_bean = Recipe()
         recipe_bean.from_json(recipe)
-        workload = Workload(service_id, int(params['ts_from']), int(params['ts_to']))
+        workload = Workload(id, int(params['ts_from']), int(params['ts_to']))
         workload.add_recipe(int("{}{}".format(int(round(time.time())), '000000000')), recipe_bean)
     else:
         LOG.info("Reusing existing analysis")
     pipe_exec = AnalysePipe()
     workload = pipe_exec.run(workload)
+    recipe = workload.get_latest_recipe()
     analysis_description = {
-        "service_id": service_id,
+        "service_id": recipe.get_service_id(),
+        "name": workload.get_service_name(),
         "analysis_id": workload.get_latest_recipe_time()
     }
     return Response(json.dumps(analysis_description), mimetype=MIME)
@@ -132,7 +139,7 @@ def refine_recipe():
     LOG.info(str(params['service_id']))
     # eng = Engine()
     # eng.run('optimal', recipe['name'], recipe['ts_from'], recipe['ts_to'])
-    workload = Workload(str(params['service_id']), None, None)
+    workload = Workload(str(params['name']), None, None)
     pipe_exec = RefineRecipePipe()
     analysis_id = params.get('analysis_id')
     if analysis_id:

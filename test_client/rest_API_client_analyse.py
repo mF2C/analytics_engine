@@ -2,7 +2,8 @@ import requests
 import json
 import time
 
-end_time = int(time.time())-10
+#end_time = int(time.time())-10
+end_time = 1543763810
 start_time = end_time - 200
 #start_time = 1543225841-100
 #end_time = 1543225841
@@ -11,7 +12,7 @@ print end_time
 headers = {'Content-type': 'application/json', 'Accept': 'text/json'}
 # data=json.dumps(payload)
 service_json = {#'service_id': '7fd553a3-b707-49b5-be65-250716e7d4fb',
-                "name": "FiveGEssence_IMS_1"
+                "name": "helloworld"
                 ,"ts_from":start_time
                 ,"ts_to":end_time
                 }
