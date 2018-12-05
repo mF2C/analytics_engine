@@ -40,7 +40,7 @@ TELEMETRY_TYPE_SNAP = "snap"
 MILLISECONDS = 10
 MINUTES_TF = 1
 
-PARALLEL = True
+PARALLEL = False
 
 class SubGraphExtraction(object):
 
@@ -302,6 +302,9 @@ class SubgraphUtilities(object):
 
         ts_from = int(ts_from)
         ts_to = int(ts_to)
+        ts_now = int(time.time())
+        if ts_to > ts_now:
+            ts_to = ts_now
         # if we are analysing the infrastructure status we ask for
         # last 10 minutes of metrics.
 
@@ -309,7 +312,7 @@ class SubgraphUtilities(object):
             ts_to = int(time.time())
             ts_from = ts_to - (MILLISECONDS*MINUTES_TF)
         #PARALLEL = True
-        if PARALLEL:
+        if PARALLEL and telemetry_type=='snap':
             annotation = \
                 pta.TelemetryAnnotation(
                     telemetry_system=telemetry_type)

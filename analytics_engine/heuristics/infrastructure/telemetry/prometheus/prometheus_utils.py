@@ -32,21 +32,21 @@ class PrometheusUtils(object):
         source = InfoGraphNode.get_machine_name_of_pu(node)
         machine = InfoGraphNode.get_node(internal_graph, source)
         machine_util = InfoGraphNode.get_compute_utilization(machine)
-        InfoGraphNode.set_compute_utilization(machine, pandas.Dataframe())
+        InfoGraphNode.set_compute_utilization(machine, pandas.DataFrame())
 
     @staticmethod
     def annotate_machine_disk_util(internal_graph, node):
         source = InfoGraphNode.get_attributes(node)['allocation']
         machine = InfoGraphNode.get_node(internal_graph, source)
         machine_util = InfoGraphNode.get_disk_utilization(machine)
-        InfoGraphNode.set_disk_utilization(machine, pandas.Dataframe())
+        InfoGraphNode.set_disk_utilization(machine, pandas.DataFrame())
 
     @staticmethod
     def annotate_machine_network_util(internal_graph, node):
         source = InfoGraphNode.get_attributes(node)['allocation']
         machine = InfoGraphNode.get_node(internal_graph, source)
         machine_util = InfoGraphNode.get_network_utilization(machine)
-        InfoGraphNode.set_network_utilization(machine, pandas.Dataframe())
+        InfoGraphNode.set_network_utilization(machine, pandas.DataFrame())
 
     @staticmethod
     def utilization(internal_graph, node, telemetry):

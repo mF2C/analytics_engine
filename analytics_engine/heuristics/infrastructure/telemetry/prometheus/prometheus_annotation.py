@@ -79,8 +79,6 @@ class PrometheusAnnotation(GraphTelemetry):
             return queries
 
         for metric in self._get_metrics(node):
-            if metric == 'collectd_libvirt_if_errors_1':
-                print metric
             try:
                 query = self._build_query(metric, node, ts_from, ts_to)
             except Exception as e:
@@ -134,10 +132,11 @@ class PrometheusAnnotation(GraphTelemetry):
                 retries = 0
                 while retries < 3: # Cimarron.RETRIES: # ++++
                     try:
-                        print full_request
+                        #LOG.info(full_request)
                         req = requests.get(full_request,
                                            timeout=30) # Cimarron.TIMEOUT) # ++++
                         if req.status_code == 200:
+                            #print req.content.__sizeof__()
                             metrics_data[resource].append(req.json())
                         break
                     except requests.exceptions.RequestException as exc:
