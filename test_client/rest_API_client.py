@@ -2,12 +2,12 @@ import requests
 import time
 import json
 service_json = {
-    "name": 'helloworld',
-    "description": 'test workload',
-    "ts_from":'1537972500',
-    "ts_to":'1537972505',
-    "resourceURI": '/helloworld',
-    "exec": 'helloworld',
+    "name": 'cpu_stress',
+    "description": 'cpu_stress',
+    # "ts_from":'1537972500',
+    # "ts_to":'1537972505',
+    "resourceURI": '/cpu_stress',
+    "exec": 'cpu_stress',
     "exec_type":'docker',
     "category": {
         "cpu": 'low',

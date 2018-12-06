@@ -87,7 +87,6 @@ class PrometheusAnnotation(GraphTelemetry):
 
         return queries
 
-
     def _build_query(self, metric, node, ts_from, ts_to):
         """
         Return queries to use for telemetry for the specific node.
@@ -132,11 +131,11 @@ class PrometheusAnnotation(GraphTelemetry):
                 retries = 0
                 while retries < 3: # Cimarron.RETRIES: # ++++
                     try:
-                        #LOG.info(full_request)
+                        #LOG.info("Query - {}".format(full_request))
                         req = requests.get(full_request,
                                            timeout=30) # Cimarron.TIMEOUT) # ++++
                         if req.status_code == 200:
-                            #print req.content.__sizeof__()
+                            #LOG.info("Query output size - {}".format(req.content.__sizeof__()))
                             metrics_data[resource].append(req.json())
                         break
                     except requests.exceptions.RequestException as exc:

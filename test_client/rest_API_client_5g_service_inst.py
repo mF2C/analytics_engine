@@ -1,12 +1,12 @@
 import requests
 import time
 import json
-service_json = {'service_id': 'ae_validation_1',
-                "name": "ae_validation_1",
-                "description": "ae_validation_1",
-                "resourceURI": '/ae_validation_1',
+service_json = {'service_id': 'compute_1',
+                "name": "compute_1",
+                "description": "compute_1",
+                "resourceURI": '/compute_1',
     "exec": 'helloworld',
-    "exec_type":'docker',
+    "exec_type":'vm',
     "category": {
         "cpu": 'low',
         "memory": 'low',

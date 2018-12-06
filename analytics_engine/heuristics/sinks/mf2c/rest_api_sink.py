@@ -179,6 +179,9 @@ def analyze_service():
     """
     LOG.info("Analyzing service instances with url : %s", request.url)
     recipe = request.get_json()
+    service_type = 'stack'
+    if recipe.get('exec_type') == 'docker':
+        service_type = 'service'
     LOG.info(recipe)
     LOG.info(str(recipe['name']))
     workload = Workload(str(recipe['name']))
@@ -188,7 +191,7 @@ def analyze_service():
     recipe_bean.from_json(recipe)
     workload.add_recipe(int("{}{}".format(int(round(time.time())), '000000000')), recipe_bean)
     pipe_exec = AnalyseServiceHistPipe()
-    workload = pipe_exec.run(workload)
+    workload = pipe_exec.run(workload, service_type)
 
     analysis_description = {
         "service_id": recipe['name'],
