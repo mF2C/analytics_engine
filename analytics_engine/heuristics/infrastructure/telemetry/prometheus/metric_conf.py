@@ -30,13 +30,9 @@ NODE_METRICS = {
         "node_disk_read_time_seconds_total", "node_disk_reads_completed_total",
         "node_disk_reads_merged_total", "node_disk_write_time_seconds_total",
         "node_disk_writes_completed_total", "node_disk_writes_merged_total",
-        "node_disk_written_bytes_total",
-        "node_filesystem_avail_bytes",
-        "node_filesystem_device_error", "node_filesystem_files", "node_filesystem_files_free",
-        "node_filesystem_free_bytes", "node_filesystem_readonly", "node_filesystem_size_bytes"
+        "node_disk_written_bytes_total"
     ],
     NODE_TYPE.PHYSICAL_PU: [
-        "node_cpu_core_throttles_total",
         "node_cpu_frequency_hertz", "node_cpu_frequency_max_hertz", "node_cpu_frequency_min_hertz",
         "node_cpu_guest_seconds_total", "node_cpu_package_throttles_total",
         "node_cpu_seconds_total"
@@ -53,10 +49,7 @@ NODE_METRICS = {
         "node_network_transmit_fifo_total", "node_network_transmit_packets_total"
     ],
     NODE_TYPE.PHYSICAL_MACHINE: [ "node_arp_entries", "node_buddyinfo_blocks",
-        "node_cpu_core_throttles_total","node_cpu_frequency_hertz",
-        "node_cpu_frequency_max_hertz","node_cpu_frequency_min_hertz",
-        "node_cpu_guest_seconds_total","node_cpu_package_throttles_total",
-        "node_cpu_seconds_total","node_disk_io_now",
+        "node_cpu_core_throttles_total", "node_disk_io_now",
         "node_disk_io_time_seconds_total","node_disk_io_time_weighted_seconds_total",
         "node_disk_read_bytes_total","node_disk_read_time_seconds_total",
         "node_disk_reads_completed_total","node_disk_reads_merged_total",
@@ -198,7 +191,7 @@ NODE_METRICS = {
 
 NODE_TO_METRIC_TAGS = {
     NODE_TYPE.PHYSICAL_DISK: ["instance", "device"],
-    NODE_TYPE.PHYSICAL_PU: ["instance", "core"],
+    NODE_TYPE.PHYSICAL_PU: ["instance", "cpu"],
     NODE_TYPE.PHYSICAL_NIC: ["instance", "device"],
-    NODE_TYPE.VIRTUAL_MACHINE: ["exported_instance"],
+    NODE_TYPE.VIRTUAL_MACHINE: ["exported_instance"]
 }

@@ -41,14 +41,14 @@ class AnalyseServiceHistPipe(Pipe):
     :return:
     """
 
-    def run(self, workload):
+    def run(self, workload, service_type):
         print "Starting AnalyseServiceHistPipe Pipe: {}".format(time.time())
         if not workload:
             raise IOError('A workload needs to be specified')
         # get the service subgraph(s)
         telemetry_system = ConfigHelper.get("DEFAULT", "telemetry")
         service_analyse = ServiceHistorySubgraphFilter()
-        service_subgraphs = service_analyse.run(workload, telemetry_system=telemetry_system)
+        service_subgraphs = service_analyse.run(workload, service_type, telemetry_system=telemetry_system)
         print "Telemetry annotation completed in AnalyseServiceHistPipe Pipe: {}".format(time.time())
         ash = AnalyseServiceHistoryFilter()
         ash.run(workload)
