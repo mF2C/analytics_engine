@@ -1,14 +1,12 @@
 import requests
 import time
 import json
-service_json = {
-    "name": 'cpu_stress',
-    "description": 'cpu_stress',
-    # "ts_from":'1537972500',
-    # "ts_to":'1537972505',
-    "resourceURI": '/cpu_stress',
-    "exec": 'cpu_stress',
-    "exec_type":'docker',
+service_json = {'service_id': 'compute_1',
+                "name": "compute_1",
+                "description": "compute_1",
+                "resourceURI": '/compute_1',
+    "exec": 'helloworld',
+    "exec_type":'vm',
     "category": {
         "cpu": 'low',
         "memory": 'low',
@@ -30,7 +28,7 @@ service_json = {
 }
 headers = {'Content-type': 'application/json', 'Accept': 'text/json'}
 # data=json.dumps(payload)
-url = 'http://localhost:46020/mf2c/optimal'
+url = 'http://localhost:46020/5ge/analyze_service'
 print time.time()
 res = requests.post(url, json=service_json, headers=headers)
 if res.ok:

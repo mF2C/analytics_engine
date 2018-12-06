@@ -40,7 +40,7 @@ TELEMETRY_TYPE_SNAP = "snap"
 MILLISECONDS = 10
 MINUTES_TF = 1
 
-PARALLEL = True
+PARALLEL = False
 
 class SubGraphExtraction(object):
 
@@ -115,6 +115,20 @@ class SubGraphExtraction(object):
                 name = InfoGraphNode.get_name(node)
                 InfoGraphNode.set_attribute(node, 'node_name', name)
 
+        return res
+
+    def get_hist_service_nodes(self, service_type, name):
+        '''
+
+        :param service_type: 'stack' or 'service'
+        :param name: name of service or stack
+        :return: graph
+        '''
+        prop_name = "stack_name"
+        if service_type == 'service':
+            prop_name = 'service_name'
+        properties = [(prop_name, name)]
+        res = landscape.get_service_instance_hist_nodes(properties)
         return res
 
     def _get_workload_subgraph(self, stack_name, ts_from=None, ts_to=None):
@@ -271,6 +285,7 @@ class SubgraphUtilities(object):
                 InfoGraphNode.set_attributes(node, attrs)
         return res
 
+
     @staticmethod
     def graph_telemetry_annotation(graph, ts_from, ts_to, telemetry_type='snap'):
         """
@@ -287,6 +302,9 @@ class SubgraphUtilities(object):
 
         ts_from = int(ts_from)
         ts_to = int(ts_to)
+        ts_now = int(time.time())
+        if ts_to > ts_now:
+            ts_to = ts_now
         # if we are analysing the infrastructure status we ask for
         # last 10 minutes of metrics.
 
@@ -294,7 +312,7 @@ class SubgraphUtilities(object):
             ts_to = int(time.time())
             ts_from = ts_to - (MILLISECONDS*MINUTES_TF)
         #PARALLEL = True
-        if PARALLEL:
+        if PARALLEL and telemetry_type=='snap':
             annotation = \
                 pta.TelemetryAnnotation(
                     telemetry_system=telemetry_type)
