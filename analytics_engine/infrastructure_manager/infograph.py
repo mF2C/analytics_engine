@@ -57,7 +57,7 @@ class InfoGraph(nx.DiGraph):
         Initializes the InfoGraph.
         """
         super(InfoGraph, self).__init__()
-        self.telemetry = telemetry.get_telemetry()
+        #self.telemetry = telemetry.get_telemetry()
 
     def add_landscape(self, graph):
         """
@@ -657,7 +657,7 @@ class OpenStackInfoGraph(InfoGraph):
         # Add a graph
         if graph is not None:
             self.add_nodes_from(graph.nodes(data=True))
-            self.add_edges_from(graph.edges())
+            self.add_edges_from(graph.edges(data=True))
         self._set_thresholds()
         self.telemetry_data = None
 

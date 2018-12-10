@@ -21,9 +21,12 @@ __status__ = "Development"
 
 from analytics_engine import common
 from analytics_engine.heuristics.beans.infograph import InfoGraphNode, InfoGraphUtilities
-from analytics_engine.heuristics.filters import telemetry_annotation
+from analytics_engine.heuristics.filters import telemetry_annotation as ta
+from analytics_engine.heuristics.filters import parallelized_telemetry_annotation as pta
 from analytics_engine.infrastructure_manager import graphs
 from analytics_engine.infrastructure_manager.config_helper import ConfigHelper
+import threading
+import multiprocessing
 
 # ApexLake dependencies
 from analytics_engine.infrastructure_manager import landscape
@@ -36,6 +39,8 @@ TELEMETRY_TYPE_SNAP = "snap"
 
 MILLISECONDS = 10
 MINUTES_TF = 1
+
+PARALLEL = False
 
 class SubGraphExtraction(object):
 
@@ -112,12 +117,26 @@ class SubGraphExtraction(object):
 
         return res
 
+    def get_hist_service_nodes(self, service_type, name):
+        '''
+
+        :param service_type: 'stack' or 'service'
+        :param name: name of service or stack
+        :return: graph
+        '''
+        prop_name = "stack_name"
+        if service_type == 'service':
+            prop_name = 'service_name'
+        properties = [(prop_name, name)]
+        res = landscape.get_service_instance_hist_nodes(properties)
+        return res
+
     def _get_workload_subgraph(self, stack_name, ts_from=None, ts_to=None):
         res = None
         try:
             # Get the node ID for the stack_name and query the landscape
 
-            properties = [("stack_name", stack_name), ]
+            properties = [("stack_name", stack_name)]
             try:
                 time_window = ts_to - ts_from
             except:
@@ -126,8 +145,14 @@ class SubGraphExtraction(object):
                 properties, ts_from, time_window)
 
             if not landscape_res:
-                LOG.debug("No graph returned from analytics")
-                return None
+                LOG.info("No graph for a stack returned from analytics")
+                # try a service name
+                properties = [("service_name", stack_name)]
+                landscape_res = landscape.get_node_by_properties(
+                    properties, ts_from, time_window)
+                if not landscape_res:
+                    LOG.info("No graph for a service returned from analytics")
+                    return None
 
             res = landscape.get_subgraph(landscape_res.nodes()[0], ts_from, time_window)
         except Exception as e:
@@ -224,11 +249,42 @@ class SubgraphUtilities(object):
         #     workload_name, int(ts_from), int(ts_to),
         #     name_filtering_support=True)
         res = landscape.get_graph()
-        for node in res.nodes(data=True):
-            attrs = InfoGraphNode.get_attributes(node)
-            attrs = InfoGraphUtilities.str_to_dict(attrs)
-            InfoGraphNode.set_attributes(node, attrs)
+        #PARALLEL = True
+        if PARALLEL:
+            i = 0
+            threads = []
+            cpu_count = multiprocessing.cpu_count()
+            all_node = res.nodes(data=True)
+            no_node_thread = len(res.nodes()) / cpu_count
+            node_pool = []
+
+            for node in all_node:
+                if i < no_node_thread:
+                    node_pool.append(node)
+                    i = i + 1
+                else:
+                    thread1 = ParallelLandscape(i, "Thread-{}".format(InfoGraphNode.get_name(node)), i,
+                                                          node_pool)
+                    # thread1 = ParallelTelemetryAnnotation(i, "Thread-{}".format(InfoGraphNode.get_name(node)), i,
+                    #                                       node_pool, internal_graph, self.telemetry, ts_to, ts_from)
+                    thread1.start()
+                    threads.append(thread1)
+                    i = 0
+                    node_pool = []
+            if len(node_pool) != 0:
+                thread1 = ParallelLandscape(i, "Thread-{}".format(InfoGraphNode.get_name(node)), i,
+                                            node_pool)
+                thread1.start()
+                threads.append(thread1)
+
+            [t.join() for t in threads]
+        else:
+            for node in res.nodes(data=True):
+                attrs = InfoGraphNode.get_attributes(node)
+                attrs = InfoGraphUtilities.str_to_dict(attrs)
+                InfoGraphNode.set_attributes(node, attrs)
         return res
+
 
     @staticmethod
     def graph_telemetry_annotation(graph, ts_from, ts_to, telemetry_type='snap'):
@@ -246,19 +302,42 @@ class SubgraphUtilities(object):
 
         ts_from = int(ts_from)
         ts_to = int(ts_to)
+        ts_now = int(time.time())
+        if ts_to > ts_now:
+            ts_to = ts_now
         # if we are analysing the infrastructure status we ask for
         # last 10 minutes of metrics.
 
         if ts_from == 0 and ts_to == 0:
             ts_to = int(time.time())
             ts_from = ts_to - (MILLISECONDS*MINUTES_TF)
-        annotation = \
-            telemetry_annotation.TelemetryAnnotation(
-                telemetry_system=telemetry_type)
+        #PARALLEL = True
+        if PARALLEL and telemetry_type=='snap':
+            annotation = \
+                pta.TelemetryAnnotation(
+                    telemetry_system=telemetry_type)
+        else:
+            annotation = \
+                ta.TelemetryAnnotation(
+                    telemetry_system=telemetry_type)
         res = annotation.get_annotated_graph(
             graph, ts_from, ts_to, utilization=True, saturation=True)
         return res
 
+class ParallelLandscape(threading.Thread):
+
+    def __init__(self, threadID, name, counter, node):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.counter = counter
+        self.node_pool = node
+
+    def run(self):
+        for node in self.node_pool:
+            attrs = InfoGraphNode.get_attributes(node)
+            attrs = InfoGraphUtilities.str_to_dict(attrs)
+            InfoGraphNode.set_attributes(node, attrs)
 
 
 

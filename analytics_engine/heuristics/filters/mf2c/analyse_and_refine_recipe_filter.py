@@ -20,9 +20,11 @@ __email__ = "giuliana.carullo@intel.com"
 __status__ = "Development"
 
 
-from analytics_engine.heuristics.filters.mf2c.optimal_filter import OptimalFilter
+from analytics_engine.heuristics.filters.optimal_filter import OptimalFilter
 from analytics_engine.data_analytics.mf2c.refine_recipe import RefineRecipe
 from analytics_engine import common
+from analytics_engine.heuristics.filters.cimi_filter import CimiFilter
+
 import time
 
 LOG = common.LOG
@@ -44,6 +46,8 @@ class AnalyseAndRefineRecipeFilter(OptimalFilter):
         # grabbing first row
         first_row = heuristic_results.iloc[0:1, :]
         recipe = workload.get_latest_recipe()
+        cimi_filter = CimiFilter()
+        recipe = cimi_filter.run(recipe)
         refined_recipe = RefineRecipe.refine(recipe, first_row)
         workload.add_recipe(int("{}{}".format(int(round(time.time())), '000000000')), refined_recipe)
         workload.append_metadata(self.__filter_name__, refined_recipe)

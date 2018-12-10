@@ -33,6 +33,7 @@ from pandas.core.common import SettingWithCopyWarning
 CFS_GENERAL = 'General'
 CFS_DYNAMIC_PARAMS = 'Dynamic-params'
 CFS_INFLUX = 'INFLUXDB'
+CFS_PROMETHEUS = 'PROMETHEUS'
 
 
 # ------------------------------------------------------

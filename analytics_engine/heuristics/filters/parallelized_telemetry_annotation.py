@@ -20,17 +20,25 @@ __email__ = "giuliana.carullo@intel.com"
 __status__ = "Development"
 
 import pandas
+
 from analytics_engine import common
 from analytics_engine.heuristics.beans.infograph import \
     InfoGraphNode, InfoGraphUtilities, InfoGraphNodeType, InfoGraphNodeLayer
 from analytics_engine.heuristics.infrastructure.telemetry.snap_telemetry.snap_graph_telemetry import SnapAnnotation
 from analytics_engine.heuristics.infrastructure.telemetry.prometheus.prometheus_annotation import PrometheusAnnotation
-from analytics_engine.heuristics.infrastructure.telemetry.snap_telemetry.snap_utils import SnapUtils
 from analytics_engine.utilities import misc
+import multiprocessing
+import threading
+import subprocess
+from analytics_engine.heuristics.infrastructure.telemetry.snap_telemetry.snap_utils import SnapUtils
+from analytics_engine.heuristics.infrastructure.telemetry.prometheus.prometheus_utils import PrometheusUtils
 
 LOG = common.LOG
 
-class TelemetryAnnotation(object):
+
+exitFlag = 0
+
+class TelemetryAnnotation():
 
     SUPPORTED_TELEMETRY_SYSTEMS = ['snap', 'prometheus', 'local']
 
@@ -45,17 +53,73 @@ class TelemetryAnnotation(object):
 
         if telemetry_system == "snap":
             self.telemetry = SnapAnnotation()
+            self.utils = SnapUtils()
         elif telemetry_system == "prometheus":
             self.telemetry = PrometheusAnnotation()
+            self.utils = PrometheusUtils()
         else:
-            self.telemetry = None
+            self.telemetry = SnapAnnotation()
+            self.utils = SnapUtils()
 
     def get_annotated_graph(self,
                             graph,
                             ts_from,
                             ts_to,
-                            utilization=False,
-                            saturation = False):
+                            utilization=True,
+                            saturation=True):
+        internal_graph = graph.copy()
+        i = 0
+        threads = []
+        cpu_count = multiprocessing.cpu_count()
+        no_node_thread = len(internal_graph.nodes())/(cpu_count)
+        node_pool = []
+        node_pools = []
+        for node in internal_graph.nodes(data=True):
+            if i < no_node_thread:
+                node_pool.append(node)
+                i = i + 1
+            else:
+                thread1 = ParallelTelemetryAnnotation(i, "Thread-{}".format(InfoGraphNode.get_name(node)), i,
+                                                  node_pool, internal_graph, self.telemetry, ts_to, ts_from)
+                threads.append(thread1)
+                node_pools.append(node_pool)
+                i = 1
+                node_pool = [node]
+        if len(node_pool) != 0:
+            node_pools.append(node_pool)
+            thread1 = ParallelTelemetryAnnotation(i, "Thread-{}".format(InfoGraphNode.get_name(node)), i,
+                                                  node_pool, internal_graph, self.telemetry, ts_to, ts_from)
+            threads.append(thread1)
+
+        [t.start() for t in threads]
+        [t.join() for t in threads]
+
+        for node in internal_graph.nodes(data=True):
+            if InfoGraphNode.get_type(node) == InfoGraphNodeType.PHYSICAL_PU:
+                self.utils.annotate_machine_pu_util(internal_graph, node)
+            elif InfoGraphNode.node_is_disk(node):
+                self.utils.annotate_machine_disk_util(internal_graph, node)
+            elif InfoGraphNode.node_is_nic(node):
+                self.utils.annotate_machine_network_util(internal_graph, node)
+        return internal_graph
+
+
+class ParallelTelemetryAnnotation(threading.Thread):
+
+    def __init__(self, threadID, name, counter, node, graph, telemetry, ts_to, ts_from):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.counter = counter
+        self.node_pool = node
+        self.telemetry = telemetry
+        self.internal_graph = graph
+        self.ts_to = ts_to
+        self.ts_from = ts_from
+        self.telemetry_data = None
+
+    def run(self):
+
         """
         Collect data from cimmaron tsdb in relation to the specified graph and
          time windows and store an annotated subgraph in specified directory
@@ -67,15 +131,16 @@ class TelemetryAnnotation(object):
                                     utilization for each node, if available
         :return: NetworkX Graph annotated with telemetry data
         """
-        TelemetryAnnotation._get_annotated_graph_input_validation(
-            graph, ts_from, ts_to)
-        internal_graph = graph.copy()
-        self.internal_graph = internal_graph
-        for node in internal_graph.nodes(data=True):
+
+        utilization = True
+        saturation = True
+        for node in self.node_pool:
+        # node = self.node
+            telemetry_data = None
             if isinstance(self.telemetry, SnapAnnotation):
                 queries = list()
                 try:
-                    queries = self.telemetry.get_queries(internal_graph, node, ts_from, ts_to)
+                    queries = self.telemetry.get_queries(self.internal_graph, node, self.ts_from, self.ts_to)
                     # queries = self.telemetry.get_queries(graph, node, ts_from, ts_to)
                 except Exception as e:
                     LOG.error("Exception: {}".format(e))
@@ -84,84 +149,28 @@ class TelemetryAnnotation(object):
                     traceback.print_exc()
                 if len(queries) != 0:
                     InfoGraphNode.set_queries(node, queries)
-
                     telemetry_data = self.telemetry.get_data(node)
                     InfoGraphNode.set_telemetry_data(node, telemetry_data)
                     if utilization and not telemetry_data.empty:
-                        SnapUtils.utilization(internal_graph, node, self.telemetry)
+                        SnapUtils.utilization(self.internal_graph, node, self.telemetry)
                         # if only procfs is available, results needs to be
                         # propagated at machine level
-                        if InfoGraphNode.get_type(node) == InfoGraphNodeType.PHYSICAL_PU:
-                            SnapUtils.annotate_machine_pu_util(internal_graph, node)
-                        if InfoGraphNode.node_is_disk(node):
-                            SnapUtils.annotate_machine_disk_util(internal_graph, node)
-                        if InfoGraphNode.node_is_nic(node):
-                            SnapUtils.annotate_machine_network_util(internal_graph, node)
                     if saturation:
-                        SnapUtils.saturation(internal_graph, node, self.telemetry)
+                        SnapUtils.saturation(self.internal_graph, node, self.telemetry)
             elif isinstance(self.telemetry, PrometheusAnnotation):
-                queries = list()
-                try:
-                    queries = self.telemetry.get_queries(internal_graph, node, ts_from, ts_to)
-                    # queries = self.telemetry.get_queries(graph, node, ts_from, ts_to)
-                except Exception as e:
-                    LOG.error("Exception: {}".format(e))
-                    LOG.error(e)
-                    import traceback
-                    traceback.print_exc()
-                if len(queries) != 0:
-                    InfoGraphNode.set_queries(node, queries)
-
-                    telemetry_data = self.telemetry.get_data(node)
-                    InfoGraphNode.set_telemetry_data(node, telemetry_data)
-                    # if utilization and not telemetry_data.empty:
-                        #PrometheusUtils.utilization(internal_graph, node, self.telemetry)
-                        # if only procfs is available, results needs to be
-                            # propagated at machine level
-                        #if InfoGraphNode.get_type(node) == InfoGraphNodeType.PHYSICAL_PU:
-                        #    PrometheusUtils.annotate_machine_pu_util(internal_graph, node)
-                        #if InfoGraphNode.node_is_disk(node):
-                        #    PrometheusUtils.annotate_machine_disk_util(internal_graph, node)
-                        #if InfoGraphNode.node_is_nic(node):
-                        #    PrometheusUtils.annotate_machine_network_util(internal_graph, node)
-                    #if saturation:
-                        #PrometheusUtils.saturation(internal_graph, node, self.telemetry)
-            else:
                 telemetry_data = self.telemetry.get_data(node)
                 InfoGraphNode.set_telemetry_data(node, telemetry_data)
                 if utilization and not telemetry_data.empty:
-                    SnapUtils.utilization(internal_graph, node, self.telemetry)
-                    # if only procfs is available, results needs to be
-                    # propagated at machine level
-                    if InfoGraphNode.get_type(node) == InfoGraphNodeType.PHYSICAL_PU:
-                        source = InfoGraphNode.get_machine_name_of_pu(node)
-                        machine = InfoGraphNode.get_node(internal_graph, source)
-                        machine_util = InfoGraphNode.get_compute_utilization(machine)
-                        if '/intel/use/compute/utilization' not in machine_util.columns:
-                            sum_util = None
-                            pu_util = InfoGraphNode.get_compute_utilization(node)[
-                                    'intel/procfs/cpu/utilization_percentage']
-                            pu_util = pu_util.fillna(0)
-                            if 'intel/procfs/cpu/utilization_percentage' in machine_util.columns:
+                    self.utils.utilization(self.internal_graph, node, self.telemetry)
 
-                                machine_util = machine_util['intel/procfs/cpu/utilization_percentage']
-                                machine_util = machine_util.fillna(0)
-                                sum_util = machine_util.add(pu_util, fill_value=0)
-                            else:
-                                sum_util = pu_util
-                            if isinstance(sum_util, pandas.Series):
-                                # sum_util.index.name = None
-                                sum_util = pandas.DataFrame(sum_util, columns=['intel/procfs/cpu/utilization_percentage'])
-                            InfoGraphNode.set_compute_utilization(machine, sum_util)
-                        else:
-                            LOG.debug('Found use for node {}'.format(InfoGraphNode.get_name(node)))
                 if saturation:
-                    self._saturation(internal_graph, node, self.telemetry)
-        return internal_graph
+                    self.utils.saturation(self.internal_graph, node, self.telemetry)
+            self.telemetry_data = telemetry_data
+        # return internal_graph
 
     @staticmethod
     def get_pandas_df_from_graph(graph, metrics='all'):
-        return TelemetryAnnotation._create_pandas_data_frame_from_graph(
+        return ParallelTelemetryAnnotation._create_pandas_data_frame_from_graph(
             graph, metrics)
 
     @staticmethod
@@ -183,7 +192,7 @@ class TelemetryAnnotation(object):
                              format(metrics, supported_metrics))
 
         if mode == 'csv':
-            TelemetryAnnotation._export_graph_metrics_as_csv(
+            ParallelTelemetryAnnotation._export_graph_metrics_as_csv(
                 graph, destination_file_name, metrics)
 
     @staticmethod
@@ -202,10 +211,6 @@ class TelemetryAnnotation(object):
             node_layer = InfoGraphNode.get_layer(node)
             node_type = InfoGraphNode.get_type(node)
 
-            if node_type == 'vm':
-                node_attrs = InfoGraphNode.get_attributes(node)
-                node_name = node_attrs['vm_name'] if node_attrs.get('vm_name') else node_name
-
             # This method supports export of either normal metrics coming
             #  from telemetry agent or utilization type of metrics.
             if metrics == 'all':
@@ -218,27 +223,20 @@ class TelemetryAnnotation(object):
             #     InfoGraphNode.get_name(node),
             #     InfoGraphNode.get_telemetry_data(node).columns.values
             # ))
-            if isinstance(node_telemetry_data, pandas.DataFrame):
-                if node_telemetry_data.empty:
-                    continue
-                node_telemetry_data = node_telemetry_data.reset_index()
-            else:
-                continue
+
             node_telemetry_data['timestamp'] = node_telemetry_data['timestamp'].astype(
                 float)
             node_telemetry_data['timestamp'] = node_telemetry_data['timestamp'].round()
             node_telemetry_data['timestamp'] = node_telemetry_data['timestamp'].astype(
                 int)
-            renames = {}
             for metric_name in node_telemetry_data.columns.values:
                 if metric_name == 'timestamp':
                     continue
                 col_name = "{}@{}@{}@{}".\
                     format(node_name, node_layer, node_type, metric_name)
                 col_name = col_name.replace(".", "_")
-                renames[metric_name] = col_name
-            node_telemetry_data = node_telemetry_data.rename(
-                columns=renames)
+                node_telemetry_data = node_telemetry_data.rename(
+                    columns={metric_name: col_name})
 
                 # LOG.info("TELEMETRIA: {}".format(node_telemetry_data.columns.values))
 
@@ -290,7 +288,7 @@ class TelemetryAnnotation(object):
         :param directory: (str) directory where to store csv files
         :return: NetworkX Graph annotated with telemetry data
         """
-        result = TelemetryAnnotation._create_pandas_data_frame_from_graph(
+        result = ParallelTelemetryAnnotation._create_pandas_data_frame_from_graph(
             graph, metrics)
         result.to_csv(file_name, index=False)
 
@@ -344,5 +342,4 @@ class TelemetryAnnotation(object):
     def _get_annotated_graph_input_validation(graph, ts_from, ts_to):
         # TODO - Validate Graph is in the correct format
         return True
-
 

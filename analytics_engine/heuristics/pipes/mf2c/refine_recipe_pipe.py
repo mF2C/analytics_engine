@@ -22,6 +22,7 @@ __status__ = "Development"
 from analytics_engine import common
 from analytics_engine.heuristics.pipes.base import Pipe
 from analytics_engine.heuristics.sinks.mf2c.influx_sink import InfluxSink
+from analytics_engine.heuristics.filters.cimi_filter import CimiFilter
 
 LOG = common.LOG
 
@@ -48,6 +49,12 @@ class RefineRecipePipe(Pipe):
         workload = influx_sink.show(params=(service_id, self._analysis_id))
         if workload:
             latest_recipe = workload.get_latest_recipe()
+
+            # update cimi
+            cimi_filter = CimiFilter()
+            latest_recipe = cimi_filter.run(latest_recipe)
+            cimi_filter.refine(latest_recipe)
+
             LOG.info('Recipe: {}'.format(latest_recipe))
         else:
             LOG.error('No existing analysis for the specified params.')

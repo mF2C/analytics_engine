@@ -27,7 +27,7 @@ NODE_METRICS = {NODE_TYPE.PHYSICAL_DISK: ["intel/iostat/device/",
                 NODE_TYPE.PHYSICAL_PU: ["intel/proc/schedstat/cpu/",
                                         "intel/procfs/cpu/"],
                 NODE_TYPE.PHYSICAL_NIC: ["intel/net",
-                                         "intel/psutil/net",
+                                         "intel/psutil/net/",
                                          "intel/procfs/iface/",
                                          "intel/use/network/"],
                 NODE_TYPE.PHYSICAL_MACHINE: ["intel/iostat/avg-cpu/",
@@ -57,7 +57,12 @@ NODE_METRICS = {NODE_TYPE.PHYSICAL_DISK: ["intel/iostat/device/",
                                             "intel/psutil/load/",
                                             "intel/use/compute/",
                                             "intel/use/memory"],
-                NODE_TYPE.INSTANCE_DISK: ["intel/libvirt/disk/"]}
+                NODE_TYPE.INSTANCE_DISK: ["intel/libvirt/disk/"],
+                NODE_TYPE.DOCKER_CONTAINER: ["intel/docker/stats/cgroups/cpu_stats/cpu_usage/total",
+                                             "intel/docker/stats/cgroups/memory_stats/usage/usage",
+                                             "intel/docker/stats/network/tx_bytes",
+                                             "intel/docker/stats/network/rx_bytes",
+                                             "intel/docker/stats/cgroups/blkio_stats/io_time_recursive/value"]}
 
 METRIC_TAGS = [("intel/iostat/device/", ["device_id", "source"]),
                ("intel/iostat/avg-cpu/", ["source"]),
@@ -77,8 +82,7 @@ METRIC_TAGS = [("intel/iostat/device/", ["device_id", "source"]),
                ("intel/psutil/cpu/", ["source", "cpu_id"]),
                ("intel/psutil/load/", ["source"]),
                ("intel/psutil/net/all/", ["source"]),
-               ("intel/psutil/net/", ["source", "nic_id"]),
-               ("intel/psutil/net/", ["source", "nic_id"]),
+               ("intel/psutil/net/", ["source", "interface_name"]),
                ("intel/rdt/capabilities/", ["source"]), # only source tag!!!
                ("intel/rdt/llc_occupancy", ["source", "core_id"]),
                ("intel/rdt/memory_bandwidth", ["source", "core_id"]),
@@ -95,4 +99,10 @@ METRIC_TAGS = [("intel/iostat/device/", ["device_id", "source"]),
                # no support from the landscaper on network_interface, ignoring this ATM
                # just supporting retrieval by source/nova_uuid(network interface)
                # add "network_interface" once supported
-               ("intel/libvirt/network/", ["source", "nova_uuid"])]
+               ("intel/libvirt/network/", ["source", "nova_uuid"]),
+               ("intel/docker/stats/cgroups/cpu_stats/cpu_usage/total", ["docker_id", "source"]),
+               ("intel/docker/stats/cgroups/memory_stats/usage/usage", ["docker_id", "source"]),
+               ("intel/docker/stats/network/tx_bytes", ["docker_id", "source"]),
+               ("intel/docker/stats/network/rx_bytes", ["docker_id", "source"]),
+               ("intel/docker/stats/cgroups/blkio_stats/io_time_recursive/value", ["docker_id", "source"])
+               ]

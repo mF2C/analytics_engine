@@ -21,13 +21,14 @@ __status__ = "Development"
 
 from analytics_engine import common
 # from analytics.info_core import InfoGraph
-from analytics_engine.heuristics.filters.telemetry_annotation import TelemetryAnnotation
+from analytics_engine.heuristics.filters.telemetry_annotation import TelemetryAnnotation as TA
+from analytics_engine.heuristics.filters.parallelized_telemetry_annotation import TelemetryAnnotation as PTA
 from analytics_engine.heuristics.infrastructure.topology.lib_analytics import SubgraphUtilities
 from base import Filter
 
 LOG = common.LOG
 
-
+PARALLEL = True
 class SubgraphFilteredTelemetryFilter(Filter):
 
     __filter_name__ = 'subgraph_filtered_telemetry_filter'
@@ -53,7 +54,7 @@ class SubgraphFilteredTelemetryFilter(Filter):
         #Filter out nodes with no telemetry data
         try:
             # graph = TelemetryAnnotation.filter_graph(subgraph)
-            subgraph = TelemetryAnnotation.filter_graph(graph)
+            subgraph = TA.filter_graph(graph)
             workload.save_results(self.__filter_name__, subgraph)
         except KeyError as e:
             LOG.error("SubgraphAnnotatedFilter either has not been "

@@ -52,6 +52,11 @@ def get_telemetry(telemetry=None, host=None, port=None):
         password = ConfigHelper.get('SNAP', 'password')
         dbname = ConfigHelper.get('SNAP', 'dbname')
         return Snap(host, port, user, password, dbname)
+    elif telemetry == "prometheus":
+        LOG.debug('prometheus telemetry')
+        host = ConfigHelper.get('PROMETHEUS', 'PROMETHEUS_HOST')
+        port = ConfigHelper.get('PROMETHEUS', 'PROMETHEUS_PORT')
+        return (host, port)
     else:
         msg = "No telemetry class for the type: {}".format(telemetry)
         raise AttributeError(msg)

@@ -63,6 +63,14 @@ class Workload(object):
         """
         return self._workload_name
 
+    def get_service_name(self):
+        """
+        Returns the name of the workload
+        :return: workload name
+        """
+        recipe = self.get_latest_recipe()
+        return recipe._name
+
     def get_ts_from(self):
         """
         Returns the start time of the workload

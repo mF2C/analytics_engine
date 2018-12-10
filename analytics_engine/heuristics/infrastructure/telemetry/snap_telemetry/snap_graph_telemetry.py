@@ -75,8 +75,8 @@ class SnapAnnotation(GraphTelemetry):
         self.landscape = landscape
         node_layer = InfoGraphNode.get_layer(node)
         # Service Layer metrics are not required
-        if node_layer == GRAPH_LAYER.SERVICE:
-            return []
+        #if node_layer == GRAPH_LAYER.SERVICE:
+        #    return []
         for metric in self._get_metrics(node):
             try:
                 query = self._build_query(metric, node, ts_from, ts_to)
@@ -193,7 +193,7 @@ class SnapAnnotation(GraphTelemetry):
             tag_value = self._disk(node)
         elif tag_key in set(["cpu_id", "cpuID", "core_id"]):
             tag_value = self._pu(node, metric)
-        elif tag_key in set(["nic_id", "interface", "network_interface"]):
+        elif tag_key in set(["nic_id", "interface", "network_interface", "interface_name"]):
             tag_value = self._nic(node)
         elif tag_key == "nova_uuid":
             tag_value = self._nova_uuid(node)
@@ -204,6 +204,8 @@ class SnapAnnotation(GraphTelemetry):
                 tag_value = self._nic(node)
             elif "intel/use/disk" in metric:
                 tag_value = self._disk(node)
+        elif tag_key == "docker_id":
+            tag_value = InfoGraphNode.get_docker_id(node)
         return tag_value
 
     def _source(self, node):
@@ -213,7 +215,8 @@ class SnapAnnotation(GraphTelemetry):
                 return attrs['allocation']
             # fix due to the landscape
             else:
-                attrs = attrs['attributes']['attributes']
+                while attrs.get('attributes', None):
+                    attrs = attrs['attributes']
                 if 'allocation' in attrs:
                     return attrs['allocation']
         if InfoGraphNode.get_type(node) == NODE_TYPE.VIRTUAL_MACHINE:
@@ -230,6 +233,11 @@ class SnapAnnotation(GraphTelemetry):
         if InfoGraphNode.get_type(node) == NODE_TYPE.PHYSICAL_MACHINE:
             if 'name' in attrs:
                 return attrs['name']
+        if InfoGraphNode.get_type(node) == NODE_TYPE.DOCKER_CONTAINER:
+            docker_node = self.landscape.get_neighbour_by_type(InfoGraphNode.get_name(node),'docker_node')
+            if docker_node:
+                machine = self.landscape.get_neighbour_by_type(docker_node,'machine')
+                return machine
         return None
 
     def _disk(self, node):
@@ -237,7 +245,9 @@ class SnapAnnotation(GraphTelemetry):
         if (InfoGraphNode.get_type(node) == NODE_TYPE.PHYSICAL_DISK or
                 InfoGraphNode.get_type(node) == NODE_TYPE.PHYSICAL_MACHINE):
             attrs = InfoGraphNode.get_attributes(node)
-            if 'name' in attrs:
+            if 'osdev_storage-name' in attrs:
+                disk = attrs["osdev_storage-name"]
+            elif 'name' in attrs:
                 disk = attrs["name"]
         elif InfoGraphNode.get_type(node) == NODE_TYPE.INSTANCE_DISK:
             disk = InfoGraphNode.get_name(node).split("_")[1]
@@ -251,8 +261,8 @@ class SnapAnnotation(GraphTelemetry):
             # fix attributes from landscaper - fixing
             # permanently on the fly if needed
 
-            if 'attributes' in attrs:
-                attrs = attrs['attributes']['attributes']
+            while attrs.get('attributes', None):
+                attrs = attrs['attributes']
 
             if 'os_index' in attrs:
                 pu = attrs["os_index"]
@@ -265,7 +275,9 @@ class SnapAnnotation(GraphTelemetry):
         nic = None
         if InfoGraphNode.get_type(node) == NODE_TYPE.PHYSICAL_NIC:
             attrs = InfoGraphNode.get_attributes(node)
-            if 'name' in attrs:
+            if 'osdev_network-name' in attrs:
+                nic = attrs["osdev_network-name"]
+            elif 'name' in attrs:
                 nic = attrs["name"]
         # if InfoGraphNode.get_type(node) == NODE_TYPE.PHYSICAL_MACHINE:
         #     LOG.info('NODEEEEE: {}'.format(node))
@@ -326,7 +338,8 @@ class SnapAnnotation(GraphTelemetry):
         node_type = InfoGraphNode.get_type(node)
 
         if node_type in NODE_METRICS:
-            for metric in self._source_metrics(node):
+            source_metrics = self._source_metrics(node)
+            for metric in source_metrics:
                 for metric_start in NODE_METRICS[node_type]:
                     if metric.startswith(metric_start) \
                             and not self._exception(node, metric):
@@ -337,7 +350,7 @@ class SnapAnnotation(GraphTelemetry):
                         if metric.startswith('intel/libvirt/'):
                             self._get_nova_uuids(node)
                             for x in range(0, len(self.vms)):
-                                LOG.info('Adding {}'.format(metric))
+                                #LOG.info('Adding {}'.format(metric))
                                 metrics.append(metric)
                         else:
                             metrics.append(metric)
@@ -347,7 +360,7 @@ class SnapAnnotation(GraphTelemetry):
         if InfoGraphNode.get_type(node) == NODE_TYPE.PHYSICAL_MACHINE:
             phy_name = InfoGraphNode.get_name(node)
             self.vms = self.landscape.get_neighbours_by_type(phy_name, "vm")
-            LOG.info('Collecting nova uuids: {}'.format(self.vms))
+            #LOG.info('Collecting nova uuids: {}'.format(self.vms))
 
     def _source_metrics(self, node):
         """
@@ -360,24 +373,26 @@ class SnapAnnotation(GraphTelemetry):
         """
 
         metric_types = []
-
-        if InfoGraphNode.get_layer(node) == GRAPH_LAYER.PHYSICAL \
-                or InfoGraphNode.get_type(node) == NODE_TYPE.INSTANCE_DISK:
+        node_layer = InfoGraphNode.get_layer(node)
+        node_type = InfoGraphNode.get_type(node)
+        if node_layer == GRAPH_LAYER.PHYSICAL \
+                or node_type == NODE_TYPE.INSTANCE_DISK:
             try:
                 source = self._source(node)
                 identifier = source
                 query_tags = {"source": source}
                 metric_types = self._cached_metrics(identifier, query_tags)
-            except Exception:
+            except Exception as ex:
                 LOG.error('Malformed graph: {}'.format(InfoGraphNode.get_name(node)))
+                LOG.error(ex)
 
 
-        elif InfoGraphNode.get_layer(node) == GRAPH_LAYER.VIRTUAL:
+        elif node_layer == GRAPH_LAYER.VIRTUAL:
             source = self._source(node)
             stack = self._stack(node)
 
-            LOG.info("SOURCE: {}".format(source))
-            LOG.info("STACK: {}".format(stack))
+            #LOG.info("SOURCE: {}".format(source))
+            #LOG.info("STACK: {}".format(stack))
 
             if stack is not None:
 
@@ -385,6 +400,13 @@ class SnapAnnotation(GraphTelemetry):
                 # query_tags = {"source": source, "stack": stack}
 
                 query_tags = {"stack_name": stack}
+                metric_types = self._cached_metrics(identifier, query_tags)
+        elif node_type == NODE_TYPE.DOCKER_CONTAINER:
+            source = self._source(node)
+            docker_id = InfoGraphNode.get_docker_id(node)
+            if docker_id is not None and source is not None:
+                identifier = "{}-{}".format(source, docker_id)
+                query_tags = {"docker_id": docker_id, "source": source}
                 metric_types = self._cached_metrics(identifier, query_tags)
 
         return metric_types

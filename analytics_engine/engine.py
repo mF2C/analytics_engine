@@ -24,11 +24,12 @@ from analytics_engine import common as common
 from analytics_engine.heuristics.beans.workload import Workload
 from analytics_engine.heuristics.pipes.annotated_telemetry_pipe import AnnotatedTelemetryPipe
 from analytics_engine.heuristics.pipes.mf2c.avg_heuristic import AvgHeuristicPipe
-from analytics_engine.heuristics.pipes.mf2c.optimal_pipe import OptimalPipe
+from analytics_engine.heuristics.pipes.optimal_pipe import OptimalPipe
 from analytics_engine.heuristics.pipes.mf2c.refine_recipe_pipe import RefineRecipePipe
 from analytics_engine.heuristics.sinks.mf2c.rest_api_sink import RestiAPI
 from analytics_engine.utilities import misc as utils
 from analytics_engine.utilities.misc import Validation
+import time
 
 LOG = common.LOG
 
@@ -45,8 +46,12 @@ class Engine:
         # required initialization
         # Init Common
         self._setup_framework_base_directory()
-        self.workload = Workload(workload_name, ts_from, ts_to, config, config_type)
         self.pipe = pipe
+        if pipe == 'optimal':
+            ts_from = 0
+            ts_to = 0
+            workload_name = pipe+"_"+str(int(time.time()))
+        self.workload = Workload(workload_name, ts_from, ts_to, config, config_type)
         self.analysis_id = analysis_id
 
     def run(self):

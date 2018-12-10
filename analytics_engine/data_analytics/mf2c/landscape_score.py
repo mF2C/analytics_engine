@@ -21,7 +21,8 @@ __status__ = "Development"
 
 import pandas
 import analytics_engine.common as common
-from analytics_engine.heuristics.beans.infograph import InfoGraphNode
+from analytics_engine.heuristics.beans.infograph import InfoGraphNode, InfoGraphNodeType
+
 # from lib_analytics
 
 LOG = common.LOG
@@ -56,17 +57,60 @@ class LandscapeScore(object):
                              util==None):
                 continue
 
+            # intel/use/
             if 'intel/use/compute/utilization' in util:
                 res[node_name]['compute'] = (util.get('intel/use/compute/utilization').mean()) / 100.0
             elif 'intel/procfs/cpu/utilization_percentage' in util:
-                res[node_name]['compute'] = (util.get('intel/procfs/cpu/utilization_percentage').mean()) / 100.0
+                    res[node_name]['compute'] = (util.get('intel/procfs/cpu/utilization_percentage').mean()) / 100.0
             if 'intel/use/memory/utilization' in util:
                 res[node_name]['memory'] = (util.get('intel/use/memory/utilization').mean()) / 100.0
+            elif 'intel/procfs/memory/utilization_percentage' in util:
+                res[node_name]['memory'] = (util.get('intel/procfs/memory/utilization_percentage').mean()) / 100.0
             if 'intel/use/disk/utilization' in util:
                 res[node_name]['disk'] = (util.get('intel/use/disk/utilization').mean()) / 100.0
+            elif 'intel/procfs/disk/utilization_percentage' in util:
+                res[node_name]['disk'] = (util.get('intel/procfs/disk/utilization_percentage').mean()) / 100.0
             if 'intel/use/network/utilization' in util:
-                res[node_name]['network'] =(util.get('intel/use/network/utilization').mean()) / 100.0
-           
+                res[node_name]['network'] = (util.get('intel/use/network/utilization').mean()) / 100.0
+            elif 'intel/psutil/net/utilization_percentage' in util:
+                res[node_name]['network'] = (util.get('intel/psutil/net/utilization_percentage').mean()) / 100.0
+
+            # special handling of cpu, disk & network utilization if node is a machine
+            if InfoGraphNode.node_is_machine(node):
+                # mean from all cpu columns
+                cpu_util = InfoGraphNode.get_compute_utilization(node)
+                cpu_util['total'] = [sum(row) / len(row) for index, row in cpu_util.iterrows()]
+                res[node_name]['compute'] = cpu_util['total'].mean() / 100
+                # mean from all disk columns
+                disk_util = InfoGraphNode.get_disk_utilization(node)
+                disk_util['total'] = [sum(row) / len(row) for index, row in disk_util.iterrows()]
+                res[node_name]['disk'] = disk_util['total'].mean() / 100
+                # mean from all nic columns
+                net_util = InfoGraphNode.get_network_utilization(node)
+                net_util['total'] = [sum(row) / len(row) for index, row in net_util.iterrows()]
+                res[node_name]['network'] = net_util['total'].mean() / 100
+                # custom metric
+
+            if InfoGraphNode.get_type(node)==InfoGraphNodeType.DOCKER_CONTAINER:
+                node_name = InfoGraphNode.get_docker_id(node)
+                res[node_name] = {}
+                if 'intel/docker/stats/cgroups/cpu_stats/cpu_usage/percentage' in util.columns:
+                    res[node_name]['compute'] = util['intel/docker/stats/cgroups/cpu_stats/cpu_usage/percentage'].mean() / 100
+                else:
+                    res[node_name]['compute'] = 0
+                if 'intel/docker/stats/cgroups/memory_stats/usage/percentage' in util.columns:
+                    res[node_name]['memory'] = util['intel/docker/stats/cgroups/memory_stats/usage/percentage'].mean() / 100
+                else:
+                    res[node_name]['memory'] = 0
+                if 'intel/docker/stats/network/utilization_percentage' in util.columns:
+                    res[node_name]['network'] = util['intel/docker/stats/network/utilization_percentage'].mean() / 100
+                else:
+                    res[node_name]['network'] = 0
+                if 'intel/docker/stats/cgroups/blkio_stats/io_time_recursive/percentage' in util.columns:
+                    res[node_name]['disk'] = util['intel/docker/stats/cgroups/blkio_stats/io_time_recursive/percentage'].mean() / 100
+                else:
+                    res[node_name]['disk'] = 0
+
         return res
 
     @staticmethod

@@ -63,19 +63,22 @@ class FileSink(Sink):
             destination_file_name=filename,
             mode='csv', metrics='all')
 
-        # Export topology
-        filename = os.path.join(
-            exp_dir,
-            "{}_topology.json".format(workload.get_workload_name()))
+        if topology:
+            # Export topology
+            filename = os.path.join(
+                exp_dir,
+                "{}_topology.json".format(workload.get_workload_name()))
 
-        # TODO: fix this workaround
-        subgraph_topology = workload.get_result('subgraph_filter')
-        if not subgraph_topology:
-            subgraph_topology = workload.get_result('graph_filter')
+            # TODO: fix this workaround
+            subgraph_topology = workload.get_result('subgraph_filter')
+            if not subgraph_topology:
+                subgraph_topology = workload.get_result('graph_filter')
+            if not subgraph_topology:
+                subgraph_topology = workload.get_latest_graph()
 
-        with open(filename, 'w') as outfile:
-            topology = json_graph.node_link_data(subgraph_topology)
-            outfile.write(json.dumps(topology))
+            with open(filename, 'w') as outfile:
+                topology = json_graph.node_link_data(subgraph_topology)
+                outfile.write(json.dumps(topology))
 
         metadata = workload.get_metadata()
         if metadata:
@@ -88,3 +91,13 @@ class FileSink(Sink):
 
         def show(self, source_type):
             LOG.error('File sink does not implement show method')
+
+    @staticmethod
+    def check(source_name):
+        exp_dir = os.path.join(LOCAL_RES_DIR, str(source_name))
+        if not os.path.exists(LOCAL_RES_DIR):
+            return False
+
+        if not os.path.exists(exp_dir):
+            return False
+        return True

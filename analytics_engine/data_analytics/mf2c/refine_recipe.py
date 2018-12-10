@@ -35,6 +35,13 @@ class RefineRecipe(object):
             recipe.set_category(tag=tag, value="medium")
         else:
             recipe.set_category(tag=tag, value="high")
+        #added by Sridhar Voorakkara
+        if isinstance(value, dict):
+            value = value.get(value.keys()[0])
+            if value < 1:
+                value = 1
+        if value:
+            recipe.set_category(tag=tag, value=value)
 
     @staticmethod
     def refine(recipe, conf):
@@ -50,8 +57,9 @@ class RefineRecipe(object):
         memory = conf_dict['memory utilization']
         network = conf_dict['network utilization']
         storage = conf_dict['disk utilization']
-        RefineRecipe._adjust(recipe, "cpu", compute)
-        RefineRecipe._adjust(recipe, "memory", memory)
-        RefineRecipe._adjust(recipe, "network", network)
-        RefineRecipe._adjust(recipe, "disk", storage)
+        if recipe:
+            RefineRecipe._adjust(recipe, "cpu", compute)
+            RefineRecipe._adjust(recipe, "memory", memory)
+            RefineRecipe._adjust(recipe, "network", network)
+            RefineRecipe._adjust(recipe, "disk", storage)
         return recipe
