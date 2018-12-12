@@ -129,7 +129,7 @@ Infrastructure Manager
 Manages the details with infrasturcure and telemetry retrieval.
 At the moment we provide support for:
 * [Landscaper](https://github.com/IntelLabsEurope/landscaper) for topology.
-* [SNAP](https://github.com/intelsdi-x/snap) for telemetry.
+* [SNAP](https://github.com/intelsdi-x/snap) or [PROMETHEUS](https://prometheus.io) for telemetry.
 
 
 Analytics Engine Installation
@@ -181,7 +181,10 @@ The following example shows some of the major setting required:
                  running.
 4. **[SNAP]** - the engine currently supports Snap telemetry. Use this section to configure
             where Snap is collecting data and relative access data.
-5. **[Dynamic-params]** - set development accordingly to your deployment type.
+6. **[PROMETHEUS]** - The engine also supports Prometheus telemetry. Set the host and port of prometheus data source 
+7. **[Dynamic-params]** - set development accordingly to your deployment type.
+8. **[CIMI]** - The engine supports CIMI service catalog. Set the url of the CIMI REST API
+
 
 Ready to Go
 ------------------------
@@ -251,7 +254,7 @@ This command will power up a Flask server. Current functionalities available thr
 * Trigger analysis on a deployed workload.
 * Ask for a refined recipe based on previous analysis.
 
-Examples of API usage are provided in the [example folder](../examples/).
+Examples of API usage are provided in the [example folder](../examples/) &  [test_client folder](../test_client/).
 
 Deployment Considerations
 =============================================
