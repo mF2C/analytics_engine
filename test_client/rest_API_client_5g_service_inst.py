@@ -1,10 +1,10 @@
 import requests
 import time
 import json
-service_json = {'service_id': 'compute_1',
-                "name": "compute_1",
-                "description": "compute_1",
-                "resourceURI": '/compute_1',
+service_json = {'service_id': 'FGE_stack_1',
+                "name": "FGE_stack_1",
+                "description": "FGE_stack_1",
+                "resourceURI": '/FGE_stack_1',
     "exec": 'helloworld',
     "exec_type":'vm',
     "category": {

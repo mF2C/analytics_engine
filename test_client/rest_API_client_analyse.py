@@ -11,10 +11,10 @@ print start_time
 print end_time
 headers = {'Content-type': 'application/json', 'Accept': 'text/json'}
 # data=json.dumps(payload)
-service_json = {'service_id': 'cpu_stress',
-                "name": "cpu_stress",
-                "ts_from":'1544018140',
-                "ts_to":'1544018210',
+service_json = {'service_id': 'clearwater_ims',
+                "name": "clearwater_ims",
+                "ts_from":'1550756320',
+                "ts_to":'1550756330',
                 "description": "test workload",
                 "resourceURI": '/cpu_stress',
                 "exec": 'helloworld',

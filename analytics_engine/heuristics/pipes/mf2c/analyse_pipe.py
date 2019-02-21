@@ -56,4 +56,21 @@ class AnalysePipe(AnnotatedTelemetryPipe):
         influx_sink.save(workload)
         fs = FileSink()
         fs.save(workload)
+        # temp code for research
+        import os
+        import pickle
+        LOCAL_RES_DIR = os.path.join(common.INSTALL_BASE_DIR, "exported_data")
+        exp_dir = os.path.join(LOCAL_RES_DIR, str(workload.get_workload_name()))
+        if not os.path.exists(LOCAL_RES_DIR):
+            os.mkdir(LOCAL_RES_DIR)
+
+        if not os.path.exists(exp_dir):
+            os.mkdir(exp_dir)
+        filename = os.path.join(
+            exp_dir,
+            "{}.pickle".format(workload.get_workload_name()))
+        subgraph_topology = workload.get_latest_graph()
+        with open(filename, 'w') as outfile:
+            pickle.dump(subgraph_topology, outfile)
+        ##########################
         return workload

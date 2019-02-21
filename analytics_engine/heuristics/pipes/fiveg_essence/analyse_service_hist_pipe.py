@@ -59,5 +59,12 @@ class AnalyseServiceHistPipe(Pipe):
         # influx_sink.save(workload)
         fs = FileSink()
         fs.save(workload, topology=False)
+        # temp code
+        import pickle
+        subgraph_topology = workload.get_latest_graph()
+        filename = "/home/iolie/{}.{}".format(workload.get_workload_name(), 'pickle')
+        with open(filename, 'w') as outfile:
+            pickle.dump(subgraph_topology, outfile)
+        ##########################
         print "Data saved in AnalyseServiceHistPipe Pipe: {}".format(time.time())
         return workload

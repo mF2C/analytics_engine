@@ -31,8 +31,11 @@ from analytics_engine.heuristics.beans.infograph import InfoGraphNodeLayer
 from analytics_engine.heuristics.beans.infograph import InfoGraphNodeLayer as GRAPH_LAYER
 from analytics_engine.heuristics.beans.infograph import InfoGraphNodeType as NODE_TYPE
 from analytics_engine.heuristics.infrastructure.telemetry.graph_telemetry import GraphTelemetry
+import analytics_engine.heuristics.infrastructure.telemetry.utils as tm_utils
 from metric_conf import NODE_TO_METRIC_TAGS
 from metric_conf import NODE_METRICS
+
+PROMETHEUS_TS_LIMIT = 11000
 
 LOG = common.LOG
 
@@ -61,6 +64,10 @@ class PrometheusAnnotation(GraphTelemetry):
             LOG.debug("Exception in user code: \n{} {} {}".format(
                 '-' * 60), traceback.print_exc(file=sys.stdout), '-' * 60)
         #ret_val.set_index(keys='timestamp')
+        if InfoGraphNode.node_is_vm(node):
+            if not ret_val.empty:
+                ret_val.columns = tm_utils.clean_vm_telemetry_colnames(ret_val.columns)
+
         return ret_val
 
     def get_queries(self, graph, node, ts_from, ts_to):
@@ -96,6 +103,10 @@ class PrometheusAnnotation(GraphTelemetry):
         :param ts_to: timestamp to
         :return: an individual query URL string
         """
+        resolution = ts_to - ts_from
+        if resolution > PROMETHEUS_TS_LIMIT:
+            ts_from = ts_to - PROMETHEUS_TS_LIMIT
+
         query_head = "http://{}:{}/api/v1/query_range?query=".format(
             self.tsdb_ip, self.tsdb_port)
         query_times = "&start={}&end={}&step=1s".format(ts_from, ts_to)
@@ -131,11 +142,11 @@ class PrometheusAnnotation(GraphTelemetry):
                 retries = 0
                 while retries < 3: # Cimarron.RETRIES: # ++++
                     try:
-                        #LOG.info("Query - {}".format(full_request))
+                        # LOG.info("Query - {}".format(full_request))
                         req = requests.get(full_request,
                                            timeout=30) # Cimarron.TIMEOUT) # ++++
                         if req.status_code == 200:
-                            #LOG.info("Query output size - {}".format(req.content.__sizeof__()))
+                            # LOG.info("Query output size - {}".format(req.content.__sizeof__()))
                             metrics_data[resource].append(req.json())
                         break
                     except requests.exceptions.RequestException as exc:
