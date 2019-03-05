@@ -31,26 +31,35 @@ Models the recipe input for MF2C project.
 
 class Recipe(object):
 
-    def __init__(self, name=None, service_id=None, description=None, resourceURI=None,
-                 exec_field = None, exec_type = None, ts_to = None, ts_from = None):
+    def __init__(self, name=None, service_id=None, description=None, exec_field=None, exec_type=None, exec_ports=[],
+                 agent_type="normal", num_agents=1, cpu_arch="x64-64", os="linux", ts_to=None, ts_from=None,
+                 req_resource=[], opt_resource=[]):
         self._name = name
         self._service_id = service_id
         self._description = description
-        self._resourceURI = resourceURI
-        self._exec_field = exec_field
+        self._exec = exec_field
         self._exec_type = exec_type
+        self._exec_ports = exec_ports
         self._ts_to = ts_to
         self._ts_from = ts_from
-        self._category = {
-            "cpu": None,
-            "memory": None,
-            "disk": None,
-            "network": None
-        }
+        self._agent_type = agent_type
+        self._num_agents = num_agents
+        self._cpu_arch = cpu_arch
+        self._os = os
+        self._req_resource = req_resource
+        self._opt_resource = opt_resource
+        self._memory_min = None
+        self._disk = None
+        self._storage_min = None
+        self._network_min = None
 
-    def set_category(self, tag, value):
-        if tag in self._category.keys():
-            self._category[tag] = value
+    def refine(self, tag, value):
+        if tag == "memory":
+            self._memory_min = value
+        if tag == "network":
+            self._network_min = value
+        if tag == "disk":
+            self._disk = value
         else:
             LOG.error('Not valid tag for the recipe')
 
@@ -61,18 +70,22 @@ class Recipe(object):
                     u"description": self._description,
                     u"ts_to": self._ts_to,
                     u"ts_from": self._ts_from,
-                    u"resourceURI": self._resourceURI,
-                    u"exec": self._exec_field,
+                    u"exec": self._exec,
                     u"exec_type": self._exec_type,
-                    u"service_id":self._service_id,
-                    u"category": {
-                        u"cpu": self._category['cpu'],
-                        u"memory": self._category['memory'],
-                        u"disk": self._category['disk'],
-                        u"network": self._category['network']
-                    }
-
+                    u"exec_ports": self._exec_ports,
+                    u"agent_type": self._agent_type,
+                    u"num_agents": self._num_agents,
+                    u"service_id": self._service_id,
+                    u"cpu_arch": self._cpu_arch,
+                    u"os": self._os,
+                    u"req_resource": self._req_resource,
+                    u"opt_resource": self._opt_resource,
+                    u"memory_min": self._memory_min,
+                    u"disk": self._disk,
+                    u"storage_min": self._storage_min,
+                    u"network_min": self._network_min
                 }
+
         return json_recipe
 
     def from_json(self, json_data):
@@ -86,25 +99,28 @@ class Recipe(object):
             json_data = json.loads(json_data)
             # self._name = str(json_data['name'])
             self._name = json_data.get('name').encode("ascii") if json_data.get('name') else None
-        self._service_id = json_data.get('service_id').encode("ascii") if json_data.get('service_id') else None
+        self._service_id = json_data.get('service_id')
         self._description = json_data.get('description')
-        self._resourceURI = json_data.get('resourceURI')
-        self._exec_field = json_data.get('exec')
+        self._exec = json_data.get('exec')
         self._exec_type = json_data.get('exec_type')
+        self._exec_ports = json_data.get('exec_ports')
+        self._agent_type = json_data.get('agent_type')
+        self._num_agents = json_data.get('num_agents')
+        self._cpu_arch = json_data.get('cpu_arch')
+        self._os = json_data.get('os')
+        self._req_resource = json_data.get('req_resource')
+        self._opt_resource = json_data.get('opt_resource')
+        self._cpu_arch = json_data.get("cpu_arch"),
+        self._memory_min = json_data.get("memory_min"),
+        self._disk = json_data.get("disk"),
+        self._storage_min = json_data.get("storage_min")
+        self._network_min = json_data.get("network_min")
         if 'ts_from' in json_data:
             self._ts_to = int(json_data.get('ts_to'))
             self._ts_from = int(json_data.get('ts_from'))
         else:
             self._ts_to = 0
             self._ts_from = 0
-        category = json_data.get('category')
-        if category:
-            self._category = {
-                "cpu": category.get("cpu"),
-                "memory": category.get("memory"),
-                "disk": category.get("disk"),
-                "network": category.get("network")
-            }
 
     def set_service_id(self, service_id):
         self._service_id = service_id
