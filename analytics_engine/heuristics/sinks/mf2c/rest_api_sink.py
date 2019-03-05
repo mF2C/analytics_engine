@@ -42,6 +42,7 @@ from analytics_engine.heuristics.pipes.mf2c.refine_recipe_pipe import RefineReci
 from analytics_engine.heuristics.pipes.mf2c.analyse_pipe import AnalysePipe
 from analytics_engine.heuristics.pipes.fiveg_essence.analyse_service_hist_pipe import AnalyseServiceHistPipe
 from analytics_engine.heuristics.pipes.fiveg_essence.active_service_pipe import ActiveServicePipe
+from analytics_engine.heuristics.pipes.fiveg_essence.node_subgraph_telemetry_pipe import NodeSubgraphTelemetryPipe
 from analytics_engine.heuristics.beans.mf2c.recipe import Recipe
 from analytics_engine.heuristics.sinks.mf2c.influx_sink import InfluxSink
 
@@ -224,14 +225,28 @@ def analyze_service():
 
 
 # 5g essence specific
-@app.route("/5ge/service_telemetry", methods=['GET', 'POST'])
-def get_service_telemetry():
+@app.route("/5ge/node_subgraph_telemetry", methods=['GET', 'POST'])
+def get_subgraph_telemetry():
     """
     Returns all services currently active
     """
-    LOG.info("Retrieving Service Telemetry with url : %s", request.url)
-    pipe_exec = ServiceTelemetryPipe()
-
+    LOG.info("Retrieving Node subgraph Telemetry with url : %s", request.url)
+    recipe = request.get_json()
+    LOG.info(recipe)
+    LOG.info(str(recipe['name']))
+    workload = Workload(str(recipe['name']))
+    # storing initial recipe
+    # TODO: validate recipe format
+    recipe_bean = Recipe()
+    recipe_bean.from_json(recipe)
+    workload.add_recipe(int("{}{}".format(int(round(time.time())), '000000000')), recipe_bean)
+    pipe_exec = NodeSubgraphTelemetryPipe()
+    workload = pipe_exec.run(workload)
+    analysis_description = {
+        "node_id": recipe['name'],
+        "analysis_id": workload.get_latest_recipe_time()
+    }
+    return Response(json.dumps(analysis_description), mimetype=MIME)
 
 
 @app.route('/')
