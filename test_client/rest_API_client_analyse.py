@@ -14,6 +14,7 @@ headers = {'Content-type': 'application/json', 'Accept': 'text/json'}
 service_json = {
     "name": "clearwater_ims",
     "description": "clearwater_ims",
+    "id": "464d4a27-4f83-473f-bbe4-95c4d3b5f06b",
     "exec": "mf2c/compss-test:it2",
     "exec_type": "vm",
     "exec_ports": [8080],
@@ -26,8 +27,8 @@ service_json = {
     "disk": 100,
     "req_resource": ["Location"],
     "opt_resource": ["SenseHat"],
-    "ts_from": '1551803000',
-    "ts_to": '1551803100',
+    "ts_from": '1551803300',
+    "ts_to": '1551803400',
 }
 
 url = 'http://localhost:46020/mf2c/analyse'

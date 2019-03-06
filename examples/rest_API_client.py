@@ -54,7 +54,7 @@ json_recipe = {
 # "ts_from":'1522144953',
 
 json_internal = {
-    "service_id": 'avg_test',
+    "id": 'avg_test',
     "ts_to": '1522144965',
     "ts_from": '1522144953',
     "analysis_id": '',

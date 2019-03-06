@@ -4,6 +4,7 @@ import json
 service_json = {
     "name": "clearwater_ims",
     "description": "clearwater_ims",
+    "id": "464d4a27-4f83-473f-bbe4-95c4d3b5f06b",
     "exec": "mf2c/compss-test:it2",
     "exec_type": "vm",
     "exec_ports": [8080],

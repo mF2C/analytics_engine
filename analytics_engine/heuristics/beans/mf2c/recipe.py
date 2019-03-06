@@ -31,11 +31,11 @@ Models the recipe input for MF2C project.
 
 class Recipe(object):
 
-    def __init__(self, name=None, service_id=None, description=None, exec_field=None, exec_type=None, exec_ports=[],
+    def __init__(self, name=None, id=None, description=None, exec_field=None, exec_type=None, exec_ports=[],
                  agent_type="normal", num_agents=1, cpu_arch="x64-64", os="linux", ts_to=None, ts_from=None,
                  req_resource=[], opt_resource=[]):
         self._name = name
-        self._service_id = service_id
+        self._id = id
         self._description = description
         self._exec = exec_field
         self._exec_type = exec_type
@@ -66,7 +66,7 @@ class Recipe(object):
     def to_json(self):
         json_recipe = {
                     u"name": self._name,
-                    u"service_id": self._service_id,
+                    u"id": self._id,
                     u"description": self._description,
                     u"ts_to": self._ts_to,
                     u"ts_from": self._ts_from,
@@ -75,7 +75,6 @@ class Recipe(object):
                     u"exec_ports": self._exec_ports,
                     u"agent_type": self._agent_type,
                     u"num_agents": self._num_agents,
-                    u"service_id": self._service_id,
                     u"cpu_arch": self._cpu_arch,
                     u"os": self._os,
                     u"req_resource": self._req_resource,
@@ -99,7 +98,7 @@ class Recipe(object):
             json_data = json.loads(json_data)
             # self._name = str(json_data['name'])
             self._name = json_data.get('name').encode("ascii") if json_data.get('name') else None
-        self._service_id = json_data.get('service_id')
+        self._id = json_data.get('id')
         self._description = json_data.get('description')
         self._exec = json_data.get('exec')
         self._exec_type = json_data.get('exec_type')
@@ -110,11 +109,11 @@ class Recipe(object):
         self._os = json_data.get('os')
         self._req_resource = json_data.get('req_resource')
         self._opt_resource = json_data.get('opt_resource')
-        self._cpu_arch = json_data.get("cpu_arch"),
-        self._memory_min = json_data.get("memory_min"),
-        self._disk = json_data.get("disk"),
-        self._storage_min = json_data.get("storage_min")
-        self._network_min = json_data.get("network_min")
+        self._cpu_arch = json_data.get("cpu_arch")
+        self._memory_min=json_data.get("memory_min")
+        self._disk=json_data.get("disk")
+        self._storage_min=json_data.get("storage_min")
+        self._network_min=json_data.get("network_min")
         if 'ts_from' in json_data:
             self._ts_to = int(json_data.get('ts_to'))
             self._ts_from = int(json_data.get('ts_from'))
@@ -122,11 +121,11 @@ class Recipe(object):
             self._ts_to = 0
             self._ts_from = 0
 
-    def set_service_id(self, service_id):
-        self._service_id = service_id
+    def set_service_id(self, id):
+        self._id = id
 
     def get_service_id(self):
-        if hasattr(self, "_service_id"):
-            return self._service_id
+        if hasattr(self, "_id"):
+            return self._id
         else:
             return None
