@@ -29,19 +29,12 @@ class RefineRecipe(object):
 
     @staticmethod
     def _adjust(recipe, tag, value):
-        if value < 20:
-            recipe.set_category(tag=tag, value="low")
-        elif value < 50:
-            recipe.set_category(tag=tag, value="medium")
-        else:
-            recipe.set_category(tag=tag, value="high")
-        #added by Sridhar Voorakkara
-        if isinstance(value, dict):
-            value = value.get(value.keys()[0])
-            if value < 1:
-                value = 1
-        if value:
-            recipe.set_category(tag=tag, value=value)
+        if tag == "memory" :#and value > 10:
+            recipe.refine(tag, value)
+        if tag == "disk" :#and value > 5:
+            recipe.refine(tag, value)
+        if tag == "network":# and value > 1:
+            recipe.refine(tag, value)
 
     @staticmethod
     def refine(recipe, conf):
@@ -53,12 +46,12 @@ class RefineRecipe(object):
         """
         conf_dict = conf.to_dict()
         # node_name = str(conf_dict['node_name'])
-        compute = conf_dict['compute utilization']
-        memory = conf_dict['memory utilization']
-        network = conf_dict['network utilization']
-        storage = conf_dict['disk utilization']
+        compute = conf_dict['compute utilization'][0]
+        memory = conf_dict['memory utilization'][0]
+        network = conf_dict['network utilization'][0]
+        storage = conf_dict['disk utilization'][0]
         if recipe:
-            RefineRecipe._adjust(recipe, "cpu", compute)
+            #RefineRecipe._adjust(recipe, "cpu", compute)
             RefineRecipe._adjust(recipe, "memory", memory)
             RefineRecipe._adjust(recipe, "network", network)
             RefineRecipe._adjust(recipe, "disk", storage)

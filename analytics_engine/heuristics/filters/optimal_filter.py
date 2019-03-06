@@ -56,8 +56,13 @@ class OptimalFilter(Filter):
         for node in graph.nodes(data=True):
             node_name = InfoGraphNode.get_name(node)
             node_type = InfoGraphNode.get_type(node)
+            list_node_name = node_name
             if node_type == optimal_node_type:
-                heuristic_results = heuristic_results.append({'node_name': node_name,
+                if InfoGraphNode.node_is_vm(node):
+                    vm_name = InfoGraphNode.get_properties(node).get('vm_name')
+                    if vm_name:
+                        list_node_name = vm_name
+                heuristic_results = heuristic_results.append({'node_name': list_node_name,
                                                     'type': node_type,
                                                     'ipaddress': InfoGraphNode.get_attributes(node).get('ipaddress'), 
                                                     'compute utilization': scores[node_name]['compute'],

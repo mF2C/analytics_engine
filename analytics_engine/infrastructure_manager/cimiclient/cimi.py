@@ -43,13 +43,17 @@ def get_services_by_name(name):
 
 
 def get_service(service_id):
-    uri = CIMI_URL+SERVICE_PATH+'/{}'.format(service_id)
+    if SERVICE_PATH not in service_id:
+        service_id = SERVICE_PATH+'/{}'.format(service_id)
+    uri = CIMI_URL+service_id
     service = _get(uri)
     return service
 
 
 def update_service(service_id, service_def):
-    uri = CIMI_URL + SERVICE_PATH + '/{}'.format(service_id)
+    if SERVICE_PATH not in service_id:
+        service_id = SERVICE_PATH+'/{}'.format(service_id)
+    uri = CIMI_URL+service_id
     updt = _put(uri, service_def)
     return updt
 
