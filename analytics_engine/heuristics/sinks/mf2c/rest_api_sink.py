@@ -94,13 +94,13 @@ def get_optimal():
 @app.route("/mf2c/analyse", methods=['GET', 'POST'])
 def analyse():
     params = request.get_json()
-    service_id = params.get('service_id')
+    id = params.get('id')
     name = params.get('name')
-    if service_id:
-        LOG.info("Triggering analysis based on input service_id: {}".format(service_id))
+    if id:
+        LOG.info("Triggering analysis based on input service id: {}".format(id))
     elif name:
         LOG.info("Triggering analysis based on input service name: {}".format(name))
-    id = str(service_id) if service_id else str(name)
+    id = str(id) if id else str(name)
     influx_sink = InfluxSink()
     workload = influx_sink.show((id, None))
     recipes = {}
@@ -125,7 +125,7 @@ def analyse():
     workload = pipe_exec.run(workload)
     recipe = workload.get_latest_recipe()
     analysis_description = {
-        "service_id": recipe.get_service_id(),
+        "id": recipe.get_service_id(),
         "name": workload.get_service_name(),
         "analysis_id": workload.get_latest_recipe_time()
     }
@@ -136,15 +136,16 @@ def analyse():
 def refine_recipe():
     """
     Returns a refined recipe.
-    Accept a json with service_id and analyse_id
+    Accept a json with service id and analyse_id
     """
     LOG.info("Retrieving Refined Recipe with url : %s", request.url)
     params = request.get_json()
     LOG.info(params)
-    LOG.info(str(params['service_id']))
+    LOG.info(str(params['name']))
     # eng = Engine()
     # eng.run('optimal', recipe['name'], recipe['ts_from'], recipe['ts_to'])
-    workload = Workload(str(params['name']), None, None)
+    workload = Workload(str(params['id']), None, None)
+    # workload = Workload(str(params['name']), None, None)
     pipe_exec = RefineRecipePipe()
     analysis_id = params.get('analysis_id')
     if analysis_id:
@@ -218,7 +219,8 @@ def analyze_service():
     workload = pipe_exec.run(workload, service_type)
 
     analysis_description = {
-        "service_id": recipe['name'],
+        "name": recipe['name'],
+        "id": recipe['id'],
         "analysis_id": workload.get_latest_recipe_time()
     }
     return Response(json.dumps(analysis_description), mimetype=MIME)

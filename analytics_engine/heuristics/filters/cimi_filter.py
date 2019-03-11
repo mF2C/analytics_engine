@@ -32,9 +32,8 @@ class CimiFilter(Filter):
 
     def run(self, recipe):
         recipe_json = recipe.to_json()
-        service_id = None
-        if recipe_json.get("service_id"):
-            service_id = recipe_json['service_id']
+        service_id = recipe_json.get('id')
+        if service_id:
             if not recipe_json.get('name'):
                 service = cimiclient.get_service(service_id)
                 if service:
@@ -57,14 +56,16 @@ class CimiFilter(Filter):
 
     def refine(self, recipe):
         recipe_json = recipe.to_json()
-        if recipe_json.get("service_id"):
-            service_id = recipe_json['service_id']
+        if recipe_json.get("id"):
+            service_id = recipe_json['id']
         if service_id:
-            category = recipe_json.get("category")
             service_update = dict()
-            service_update['memory_min'] = max(int(float(category['memory'])*10000), 100)
-            # TODO: Clean this up and use actual data from recipe
-
+            if recipe_json.get('memory_min'):
+                service_update['memory_min'] = recipe_json.get('memory_min')
+            if recipe_json.get('disk'):
+                service_update['disk'] = recipe_json.get('disk')
+            if recipe_json.get('network_min'):
+                service_update['network_min'] = recipe_json.get('network_min')
             ########
             cimiclient.update_service(service_id, service_update)
             LOG.info("Refinement updated to CIMI")
