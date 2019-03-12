@@ -31,6 +31,7 @@ REST Application for the landscape.
 """
 
 import json
+from networkx.readwrite import json_graph
 import flask
 from flask import request
 from flask import Response
@@ -40,6 +41,8 @@ from analytics_engine.heuristics.filters.optimal_filter import OptimalFilter
 from analytics_engine.heuristics.pipes.mf2c.refine_recipe_pipe import RefineRecipePipe
 from analytics_engine.heuristics.pipes.mf2c.analyse_pipe import AnalysePipe
 from analytics_engine.heuristics.pipes.fiveg_essence.analyse_service_hist_pipe import AnalyseServiceHistPipe
+from analytics_engine.heuristics.pipes.fiveg_essence.active_service_pipe import ActiveServicePipe
+from analytics_engine.heuristics.pipes.fiveg_essence.node_subgraph_telemetry_pipe import NodeSubgraphTelemetryPipe
 from analytics_engine.heuristics.beans.mf2c.recipe import Recipe
 from analytics_engine.heuristics.sinks.mf2c.influx_sink import InfluxSink
 
@@ -180,6 +183,20 @@ def get_optimal_vms():
     return Response(json_results, mimetype=MIME)
 
 #5g essence specific
+@app.route("/5ge/active_services", methods=['GET', 'POST'])
+def get_active_services():
+    """
+    Returns all services currently active
+    """
+    LOG.info("Retrieving Active Services with url : %s", request.url)
+    pipe_exec = ActiveServicePipe()
+    workload = Workload("ActiveServiceList")
+    workload = pipe_exec.run(workload)
+    res = workload.get_latest_graph()
+    return Response(json.dumps(json_graph.node_link_data(res)), mimetype=MIME)
+
+
+# 5g essence specific
 @app.route("/5ge/analyze_service", methods=['GET', 'POST'])
 def analyze_service():
     """
@@ -207,6 +224,32 @@ def analyze_service():
         "analysis_id": workload.get_latest_recipe_time()
     }
     return Response(json.dumps(analysis_description), mimetype=MIME)
+
+
+# 5g essence specific
+@app.route("/5ge/node_subgraph_telemetry", methods=['GET', 'POST'])
+def get_subgraph_telemetry():
+    """
+    Returns all services currently active
+    """
+    LOG.info("Retrieving Node subgraph Telemetry with url : %s", request.url)
+    recipe = request.get_json()
+    LOG.info(recipe)
+    LOG.info(str(recipe['name']))
+    workload = Workload(str(recipe['name']))
+    # storing initial recipe
+    # TODO: validate recipe format
+    recipe_bean = Recipe()
+    recipe_bean.from_json(recipe)
+    workload.add_recipe(int("{}{}".format(int(round(time.time())), '000000000')), recipe_bean)
+    pipe_exec = NodeSubgraphTelemetryPipe()
+    workload = pipe_exec.run(workload)
+    analysis_description = {
+        "node_id": recipe['name'],
+        "analysis_id": workload.get_latest_recipe_time()
+    }
+    return Response(json.dumps(analysis_description), mimetype=MIME)
+
 
 @app.route('/')
 def hello():

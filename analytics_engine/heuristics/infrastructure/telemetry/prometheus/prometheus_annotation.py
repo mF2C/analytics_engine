@@ -31,6 +31,7 @@ from analytics_engine.heuristics.beans.infograph import InfoGraphNodeLayer
 from analytics_engine.heuristics.beans.infograph import InfoGraphNodeLayer as GRAPH_LAYER
 from analytics_engine.heuristics.beans.infograph import InfoGraphNodeType as NODE_TYPE
 from analytics_engine.heuristics.infrastructure.telemetry.graph_telemetry import GraphTelemetry
+import analytics_engine.heuristics.infrastructure.telemetry.utils as tm_utils
 from metric_conf import NODE_TO_METRIC_TAGS
 from metric_conf import NODE_METRICS
 
@@ -63,6 +64,10 @@ class PrometheusAnnotation(GraphTelemetry):
             LOG.debug("Exception in user code: \n{} {} {}".format(
                 '-' * 60), traceback.print_exc(file=sys.stdout), '-' * 60)
         #ret_val.set_index(keys='timestamp')
+        if InfoGraphNode.node_is_vm(node):
+            if not ret_val.empty:
+                ret_val.columns = tm_utils.clean_vm_telemetry_colnames(ret_val.columns)
+
         return ret_val
 
     def get_queries(self, graph, node, ts_from, ts_to):

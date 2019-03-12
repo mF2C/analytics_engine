@@ -31,6 +31,10 @@ service_json = {
     "ts_to": '1551803400',
 }
 
+# service_json = {'category': {'battery level': False, 'jammer': False, 'ir_motion': False, 'air_pressure': False, 'door sensor': False, 'pump sensor': False, 'temperature': False, 'disk': 'low', 'network': 'low', 'accelerometer': False, 'humidity': False, 'location': False, 'memory': 'low', 'inclinometer': False, 'cpu': 'low'},
+#                 'ts_from': '1550755977', 'name': 'clearwater_ims', 'resourceURI': '/clearwater_ims', 'exec_type': 'docker', 'service_id': 'clearwater_ims', 'exec': 'helloworld', 'ts_to': '1550756040', 'description': 'clearwater_ims'}
+
+
 url = 'http://localhost:46020/mf2c/analyse'
 res = requests.post(url, json=service_json, headers=headers)
 if res.ok:

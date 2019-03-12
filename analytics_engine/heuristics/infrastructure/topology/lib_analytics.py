@@ -131,6 +131,36 @@ class SubGraphExtraction(object):
         res = landscape.get_service_instance_hist_nodes(properties)
         return res
 
+    def get_active_service_nodes(self):
+        '''
+
+        :param service_type: 'stack' or 'service'
+        :param name: name of service or stack
+        :return: graph
+        '''
+        prop_name = "layer"
+        prop_value = "service"
+        ts_from = int(time.time())-5
+        timeframe = 5
+        properties = [(prop_name, prop_value)]
+        res = landscape.get_node_by_properties(properties, ts_from, timeframe)
+        return res
+
+    def get_node_subgraph(self, node_id, ts_from=None, ts_to=None):
+        try:
+            time_window = ts_to - ts_from
+        except:
+            time_window = 600
+        landscape_res = landscape.get_subgraph(
+            node_id, ts_from, time_window)
+
+        for node in landscape_res.nodes(data=True):
+            attrs = InfoGraphNode.get_attributes(node)
+            attrs = InfoGraphUtilities.str_to_dict(attrs)
+            InfoGraphNode.set_attributes(node, attrs)
+
+        return landscape_res
+
     def _get_workload_subgraph(self, stack_name, ts_from=None, ts_to=None):
         res = None
         try:
