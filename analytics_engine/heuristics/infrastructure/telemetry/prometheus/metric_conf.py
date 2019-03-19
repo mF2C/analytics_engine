@@ -169,29 +169,38 @@ NODE_METRICS = {
     # NODE_TYPE.VIRTUAL_NIC: ["net_conntrack_dialer_conn_attempted_total"] # same metrics
 
     NODE_TYPE.VIRTUAL_MACHINE: [
-        "collectd_libvirt_if_errors_1",
-        "collectd_libvirt_if_packets_1",
-        "collectd_libvirt_if_errors_0",
-        "collectd_libvirt_memory",
-        "collectd_libvirt_if_octets_0",
-        "collectd_libvirt_if_packets_0",
-        "collectd_libvirt_virt_vcpu",#cpu
-        "collectd_libvirt_disk_octets_1",
-        "collectd_libvirt_if_dropped_1",
-        "collectd_libvirt_disk_ops_0",
-        "collectd_libvirt_if_dropped_0",
-        "collectd_libvirt_disk_octets_0",
-        "collectd_disk_octets_1",#disk
-        "collectd_libvirt_if_octets_1", #network
-        "collectd_libvirt_disk_ops_1",
-        "collectd_libvirt_virt_cpu_total",
+        "libvirt_block_stats_errors_number",
+        "libvirt_block_stats_read_bytes",
+        "libvirt_block_stats_read_requests_issued",
+        "libvirt_block_stats_write_bytes",
+        "libvirt_block_stats_write_requests_issued",
+        "libvirt_cpu_stats_cpu_time_nanosecs",
+        "libvirt_cpu_stats_system_time_nanosecs",
+        "libvirt_cpu_stats_user_time_nanosecs",
+        "libvirt_interface_read_bytes",
+        "libvirt_interface_read_drops",
+        "libvirt_interface_read_errors",
+        "libvirt_interface_read_packets",
+        "libvirt_interface_write_bytes",
+        "libvirt_interface_write_drops",
+        "libvirt_interface_write_errors",
+        "libvirt_interface_write_packets",
+        "libvirt_mem_stats_actual",
+        "libvirt_mem_stats_available",
+        "libvirt_mem_stats_last_update",
+        "libvirt_mem_stats_major_fault",
+        "libvirt_mem_stats_minor_fault",
+        "libvirt_mem_stats_rss",
+        "libvirt_mem_stats_swap_in",
+        "libvirt_mem_stats_swap_out",
+        "libvirt_mem_stats_used",
+        "libvirt_mem_stats_usable"
     ]
-
 }
 
 NODE_TO_METRIC_TAGS = {
     NODE_TYPE.PHYSICAL_DISK: ["instance", "device"],
     NODE_TYPE.PHYSICAL_PU: ["instance", "cpu"],
     NODE_TYPE.PHYSICAL_NIC: ["instance", "device"],
-    NODE_TYPE.VIRTUAL_MACHINE: ["exported_instance"]
+    NODE_TYPE.VIRTUAL_MACHINE: ["domain"]
 }
