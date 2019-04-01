@@ -46,9 +46,10 @@ class AnnotatedTelemetryPipe(Pipe):
             raise IOError('A workload needs to be specified')
         # testing purposes
         workload.set_discard(False)
+        workload_config = workload.get_configuration()
         # Generalizing it to make it return entire graph
         # if ts_to and ts_from are not set up
-        if workload.get_ts_from() != 0:
+        if workload.get_ts_from() != 0 or workload_config.get('device_id'):
             sub_filter = SubgraphFilter()
             sub_filter.run(workload)
         else:

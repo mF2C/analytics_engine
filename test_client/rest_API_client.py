@@ -3,8 +3,11 @@ import time
 import json
 service_json = {
     "name": "clearwater_ims",
-    "id": "464d4a27-4f83-473f-bbe4-95c4d3b5f06b",
+    #"device_id": "092b7908-69ee-46ee-b2c7-2d9ae23ee298",
+    'sort_order': ['memory', 'cpu'],
+    #'telemetry_filter': True,
     "description": "clearwater_ims",
+    "project": "mf2c",
     "exec": "mf2c/compss-test:it2",
     "exec_type": "vm",
     "exec_ports": [8080],

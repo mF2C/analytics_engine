@@ -75,7 +75,18 @@ def get_optimal():
     # eng.run('optimal', recipe['name'], recipe['ts_from'], recipe['ts_to'])
     #else:
     #   workload = Workload(str(recipe['name']))
-    workload = Workload(workload_name)
+    config = {}
+    if recipe.get('device_id'):
+        config['device_id'] = recipe['device_id'].strip().lower().replace('-', '_')
+    if recipe.get('project'):
+        config['project'] = recipe['project']
+    if recipe.get('sort_order'):
+        config['sort_order'] = recipe['sort_order']
+    if recipe.get('telemetry_filter', None) is not None:
+        config['telemetry_filter'] = recipe['telemetry_filter']
+    else:
+        config['telemetry_filter'] = False
+    workload = Workload(workload_name, workload_config=config)
     # storing initial recipe
     # TODO: validate recipe format
     recipe_bean = Recipe()

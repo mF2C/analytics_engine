@@ -40,6 +40,7 @@ class OptimalFilter(Filter):
 
         :return: heuristic results
         """
+        workload_config = workload.get_configuration()
         graph = workload.get_latest_graph()
         if not graph:
             raise KeyError('No graph to be processed.')
@@ -52,7 +53,15 @@ class OptimalFilter(Filter):
                                                   'network utilization', 'network saturation',
                                                   'disk utilization', 'disk saturation',
                                                   ])
+        heuristic_results_nt = heuristic_results.copy()
+        device_id_col_name = None
+        project = None
+        if workload_config.get('project'):
+            project = workload_config['project']
+            device_id_col_name = workload_config['project']+'_device_id'
+            heuristic_results[device_id_col_name] = None
 
+        telemetry_filter = workload_config.get('telemetry_filter')
         for node in graph.nodes(data=True):
             node_name = InfoGraphNode.get_name(node)
             node_type = InfoGraphNode.get_type(node)
@@ -62,9 +71,9 @@ class OptimalFilter(Filter):
                     vm_name = InfoGraphNode.get_properties(node).get('vm_name')
                     if vm_name:
                         list_node_name = vm_name
-                heuristic_results = heuristic_results.append({'node_name': list_node_name,
+                data = {'node_name': list_node_name,
                                                     'type': node_type,
-                                                    'ipaddress': InfoGraphNode.get_attributes(node).get('ipaddress'), 
+                                                    'ipaddress': InfoGraphNode.get_attributes(node).get('ipaddress'),
                                                     'compute utilization': scores[node_name]['compute'],
                                                     'compute saturation': scores_sat[node_name]['compute'],
                                                     'memory utilization': scores[node_name]['memory'],
@@ -72,8 +81,18 @@ class OptimalFilter(Filter):
                                                     'network utilization': scores[node_name]['network'],
                                                     'network saturation': scores_sat[node_name]['network'],
                                                     'disk utilization': scores[node_name]['disk'],
-                                                    'disk saturation': scores_sat[node_name]['disk']},
-                                                    ignore_index=True)
+                                                    'disk saturation': scores_sat[node_name]['disk']}
+                if device_id_col_name:
+                    dev_id = InfoGraphNode.get_properties(node).get(device_id_col_name)
+                    if project == 'mf2c':
+                        dev_id = dev_id.replace('_', '-')
+                    data[device_id_col_name] = dev_id
+                if InfoGraphNode.get_properties(node).get("telemetry_data") is not None:
+                    heuristic_results = heuristic_results.append(data,
+                                                        ignore_index=True)
+                elif not telemetry_filter:
+                    heuristic_results_nt = heuristic_results.append(data,
+                                                        ignore_index=True)
 
             if not workload.get_workload_name().startswith('optimal_'):
                 if InfoGraphNode.get_type(node) == "docker_container" and optimal_node_type == 'machine':
@@ -90,7 +109,22 @@ class OptimalFilter(Filter):
                                                     'disk utilization': scores[node_name]['disk'],
                                                     'disk saturation': None},
                                                     ignore_index=True)
-        heuristic_results = heuristic_results.sort_values(by=['compute utilization'], ascending=True)
+        sort_fields = ['compute utilization']
+        sort_order = workload_config.get('sort_order')
+        if sort_order:
+            sort_fields = []
+            for val in sort_order:
+                if val == 'cpu':
+                    sort_fields.append('compute utilization')
+                if val == 'memory':
+                    sort_fields.append('memory utilization')
+                if val == 'network':
+                    sort_fields.append('network utilization')
+                if val == 'disk':
+                    sort_fields.append('disk utilization')
+        heuristic_results_nt = heuristic_results_nt.replace([0], [None])
+        heuristic_results = heuristic_results.sort_values(by=sort_fields, ascending=True)
+        heuristic_results = heuristic_results.append(heuristic_results_nt, ignore_index=True)
         workload.append_metadata(self.__filter_name__, heuristic_results)
         LOG.info('AVG: {}'.format(heuristic_results))
         return heuristic_results

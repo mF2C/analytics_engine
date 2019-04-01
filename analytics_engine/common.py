@@ -23,7 +23,7 @@ import os
 import logging
 import warnings
 from analytics_engine.infrastructure_manager.config_helper import ConfigHelper
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from urllib3.exceptions import InsecureRequestWarning
 
 from pandas.core.common import SettingWithCopyWarning
 

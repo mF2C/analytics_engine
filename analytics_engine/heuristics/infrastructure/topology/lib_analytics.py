@@ -44,7 +44,10 @@ PARALLEL = False
 
 class SubGraphExtraction(object):
 
-    def __init__(self, landscape_ip="10.1.0.79", landscape_port="9000"):
+    def __init__(self, landscape_ip=None, landscape_port=None):
+        if not landscape_ip:
+            landscape_ip = ConfigHelper.get("LANDSCAPE", "host")
+            landscape_port = ConfigHelper.get("LANDSCAPE", "port")
         landscape.set_landscape_server(host=landscape_ip, port=landscape_port)
 
     def get_compute_node_view(self,
@@ -352,6 +355,24 @@ class SubgraphUtilities(object):
                     telemetry_system=telemetry_type)
         res = annotation.get_annotated_graph(
             graph, ts_from, ts_to, utilization=True, saturation=True)
+        return res
+
+
+class LandscapeUtils(object):
+
+    def __init__(self):
+        landscape_ip = ConfigHelper.get("LANDSCAPE", "host")
+        landscape_port = ConfigHelper.get("LANDSCAPE", "port")
+        landscape.set_landscape_server(host=landscape_ip, port=landscape_port)
+
+    def get_node_by_properties(self, properties, inactive=False):
+        from_ts = int(time.time())
+        if inactive:
+            # to_ts = int(attrs['to'])
+            tf = from_ts * -1
+        else:
+            tf = 0
+        res = landscape.get_node_by_properties(properties, from_ts, tf)
         return res
 
 class ParallelLandscape(threading.Thread):
