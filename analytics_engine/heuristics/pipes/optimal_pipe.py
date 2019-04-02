@@ -40,6 +40,8 @@ class OptimalPipe(AnnotatedTelemetryPipe):
         if not workload:
             raise IOError('A workload needs to be specified')
         super(OptimalPipe, self).run(workload)
+        if workload.get_latest_graph() is None:
+            return workload
         avg_filter = OptimalFilter()
         avg_filter.run(workload, optimal_node_type)
         fs = FileSink()
