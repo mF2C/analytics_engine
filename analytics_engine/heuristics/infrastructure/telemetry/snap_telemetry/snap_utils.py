@@ -128,6 +128,17 @@ class SnapUtils(object):
             net_data_interval['intel/psutil/net/utilization_percentage'] = net_data_interval['intel/psutil/net/bytes_total'] * 100 /nic_speed
             net_data_pct = pandas.DataFrame(net_data_interval['intel/psutil/net/utilization_percentage'])
             InfoGraphNode.set_network_utilization(node, net_data_pct)
+        elif 'intel/procfs/iface/bytes_recv' in telemetry_data and 'intel/procfs/iface/bytes_recv' in telemetry_data:
+            source=telemetry._source(node)
+            machine = InfoGraphNode.get_node(internal_graph, source)
+            nic_speed = InfoGraphNode.get_nic_speed_mbps(machine) * 1000000
+            net_data = telemetry_data.filter(['timestamp', 'intel/procfs/iface/bytes_recv','intel/procfs/iface/bytes_sent'], axis=1)
+            net_data.fillna(0)
+            net_data['intel/psutil/net/bytes_total'] = net_data['intel/procfs/iface/bytes_recv']+net_data['intel/procfs/iface/bytes_sent']
+            net_data_interval = net_data.set_index('timestamp').diff()
+            net_data_interval['intel/psutil/net/utilization_percentage'] = net_data_interval['intel/psutil/net/bytes_total'] * 100 /nic_speed
+            net_data_pct = pandas.DataFrame(net_data_interval['intel/psutil/net/utilization_percentage'])
+            InfoGraphNode.set_network_utilization(node, net_data_pct)
         if 'intel/docker/stats/cgroups/cpu_stats/cpu_usage/total' in telemetry_data:
             # Container node
             #cpu util

@@ -193,8 +193,8 @@ class SnapAnnotation(GraphTelemetry):
             tag_value = self._disk(node)
         elif tag_key in set(["cpu_id", "cpuID", "core_id"]):
             tag_value = self._pu(node, metric)
-        elif tag_key in set(["nic_id", "interface", "network_interface", "interface_name"]):
-            tag_value = self._nic(node)
+        elif tag_key in set(["nic_id", "interface", "network_interface", "interface_name", "hardware_addr"]):
+            tag_value = self._nic(node, tag_key)
         elif tag_key == "nova_uuid":
             tag_value = self._nova_uuid(node)
         elif tag_key == "stack_name":
@@ -271,11 +271,13 @@ class SnapAnnotation(GraphTelemetry):
             pu = "cpu{}".format(pu)
         return pu
 
-    def _nic(self, node):
+    def _nic(self, node, tag_key):
         nic = None
         if InfoGraphNode.get_type(node) == NODE_TYPE.PHYSICAL_NIC:
             attrs = InfoGraphNode.get_attributes(node)
-            if 'osdev_network-name' in attrs:
+            if tag_key == "hardware_addr":
+                nic = attrs["address"]
+            elif 'osdev_network-name' in attrs:
                 nic = attrs["osdev_network-name"]
             elif 'name' in attrs:
                 nic = attrs["name"]

@@ -21,7 +21,8 @@ __status__ = "Development"
 
 
 from analytics_engine import common
-from analytics_engine.heuristics.infrastructure.topology.lib_analytics import SubgraphUtilities
+from analytics_engine.heuristics.infrastructure.topology.lib_analytics import SubgraphUtilities, SubGraphExtraction, LandscapeUtils
+from analytics_engine.heuristics.beans.infograph import InfoGraphNode
 from base import Filter
 
 LOG = common.LOG
@@ -43,9 +44,22 @@ class SubgraphFilter(Filter):
         subgraph = None
         try:
             LOG.debug("Workload: {}".format(workload.get_workload_name()))
-
-            subgraph = SubgraphUtilities.extract_workload_subgraphs(
-                        workload.get_service_name(), workload.get_ts_from(), workload.get_ts_to())
+            workload_config = workload.get_configuration()
+            if workload_config.get('device_id'):
+                prop_name = workload_config.get('project', '') + '_device_id'
+                device_id = workload_config['device_id']
+                properties = [(prop_name, device_id)]
+                ls_utils = LandscapeUtils()
+                res = ls_utils.get_node_by_properties(properties, inactive=False)
+                nodes = [(node[0], InfoGraphNode.get_attributes(node).get('from'),
+                          InfoGraphNode.get_attributes(node).get('to')) for node in res.nodes(data=True)]
+                nodes.sort(reverse=True, key=self.node_sort)
+                node_id = nodes[0][0]
+                sge = SubGraphExtraction()
+                subgraph = sge.get_node_subgraph(node_id, workload.get_ts_from(), workload.get_ts_to())
+            else:
+                subgraph = SubgraphUtilities.extract_workload_subgraphs(
+                            workload.get_service_name(), workload.get_ts_from(), workload.get_ts_to())
         except Exception as e:
                 LOG.error(e)
                 LOG.error("No topology data has been found for the selected "
@@ -55,3 +69,6 @@ class SubgraphFilter(Filter):
                 exit()
         workload.save_results(self.__filter_name__, subgraph)
         return subgraph
+
+    def node_sort(self, elem):
+        return elem[1]
