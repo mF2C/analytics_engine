@@ -52,6 +52,9 @@ class AnnotatedTelemetryPipe(Pipe):
         if workload.get_ts_from() != 0 or workload_config.get('device_id'):
             sub_filter = SubgraphFilter()
             sub_filter.run(workload)
+            if workload.get_latest_graph() is None:
+                LOG.error("No topology data has been found for the selected workload.")
+                return workload
         else:
             graph_filter = GraphFilter()
             graph_filter.run(workload)

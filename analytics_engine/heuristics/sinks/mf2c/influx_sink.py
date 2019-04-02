@@ -137,7 +137,7 @@ class InfluxSink(Sink):
         if self.INFLUX:
             # At the moment this just stores results from comparison
             data = self._workload_to_json(workload)
-            LOG.info("Writing workload data: {}".format(data))
+            # LOG.info("Writing workload data: {}".format(data))
             self.client.write_points(data)
         else:
             LOG.error('Modify the configuration file in order to use influx for storage')

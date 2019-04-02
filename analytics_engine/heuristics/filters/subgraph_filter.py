@@ -53,6 +53,8 @@ class SubgraphFilter(Filter):
                 res = ls_utils.get_node_by_properties(properties, inactive=False)
                 nodes = [(node[0], InfoGraphNode.get_attributes(node).get('from'),
                           InfoGraphNode.get_attributes(node).get('to')) for node in res.nodes(data=True)]
+                if len(nodes) == 0:
+                    return
                 nodes.sort(reverse=True, key=self.node_sort)
                 node_id = nodes[0][0]
                 sge = SubGraphExtraction()

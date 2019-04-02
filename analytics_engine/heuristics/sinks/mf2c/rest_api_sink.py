@@ -95,6 +95,8 @@ def get_optimal():
     pipe_exec = OptimalPipe()
     node_type = 'machine'
     workload = pipe_exec.run(workload, node_type)
+    if workload.get_latest_graph() is None and config.get('device_id') is not None:
+        return Response('Device not found', status=404)
     results = workload.get_metadata(OptimalFilter.__filter_name__)
     #return Response(results.to_json(), mimetype=MIME)
     #return Response(results.to_dict('results'), mimetype=MIME)
@@ -228,7 +230,6 @@ def analyze_service():
     workload.add_recipe(int("{}{}".format(int(round(time.time())), '000000000')), recipe_bean)
     pipe_exec = AnalyseServiceHistPipe()
     workload = pipe_exec.run(workload, service_type)
-
     analysis_description = {
         "name": recipe['name'],
         "id": recipe['id'],
