@@ -52,7 +52,7 @@ class AnnotatedTelemetryPipe(Pipe):
         if workload.get_ts_from() != 0 or workload_config.get('device_id'):
             sub_filter = SubgraphFilter()
             sub_filter.run(workload)
-        else:
+        if (workload.get_ts_from() == 0 and workload_config.get('device_id') is None) or workload.get_latest_graph() is None:
             graph_filter = GraphFilter()
             graph_filter.run(workload)
         sub_filter_ann = SubgraphAnnotatedFilter()
