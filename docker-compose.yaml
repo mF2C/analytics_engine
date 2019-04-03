@@ -16,7 +16,7 @@ services:
     depends_on:
       - influxdb-analytics
     volumes:
-      - ./analytics_engine.conf:/analytics_engine/analytics_engine.conf
+      - ./analytics_engine.conf:/root/analytics_engine/analytics_engine.conf
       
 volumes:
   influx-analytics: {}
