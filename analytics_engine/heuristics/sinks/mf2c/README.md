@@ -56,16 +56,18 @@ Analytics Engine provides following Web API Endpoints
 	analyse endpoint runs an analysis of telemetry data of a service for the requested timeframe. 
 
 
-- refine
+- **refine**
 
 		POST /mf2c/refine
 
 refine endpoint uses an analysis previously performed by a call to analyse end point and updates the service in CIMI with recommended CPU, Memory, Disk & Network requirements for a service. 
 
-Example web API calls are in the [test_client](/analytics_engine/test_client) test_client folder.
+Example web API calls are in the [test_client](../../../../test_client) folder.
 
-optimal - [/analytics_engine/test_client/rest_api_client.py](/analytics_engine/test_client/rest_api_client.py)
-analyse - [/analytics_engine/test_client/rest_api_client_analyse.py](/analytics_engine/test_client/rest_api_client_analyse.py)
-refine - [/analytics_engine/test_client/rest_api_client_refine.py](/analytics_engine/test_client/rest_api_client_refine.py)
+- optimal - [rest_api_client.py](../../../../test_client/rest_API_client.py)
+
+- analyse - [rest_api_client_analyse.py](../../../../test_client/rest_API_client_analyse.py)
+
+- refine - [rest_api_client_refine.py](../../../../test_client/rest_API_client_refine.py)
 
 
