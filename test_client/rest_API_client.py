@@ -6,7 +6,7 @@ service_json = {
     "device_id": "092b7908-69ee-46ee-b2c7-2d9ae23ee298", #optional. No device filtering applied if this value is not provided. Invalid device will return 404 error.
     'sort_order': ['memory', 'cpu'], #optional, default - [cpu]
     'telemetry_filter': False, #optional, default - False
-    "description": "clearwater_ims",
+    "description": "test",
     "project": "mf2c" #optional. Required if device_id is provided for filtering
 }
 

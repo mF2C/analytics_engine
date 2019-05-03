@@ -8,7 +8,7 @@ service_json = {
     "description": "test service",
     "id": "464d4a27-4f83-473f-bbe4-95c4d3b5f06b",
     "ts_from": '1551803300',
-    "ts_to": '1551803400',
+    "ts_to": '1551803400'
 }
 
 url = 'http://localhost:46020/mf2c/analyse'
