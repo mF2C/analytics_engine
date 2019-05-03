@@ -44,7 +44,7 @@ For End Users
 As an end user of the Edge Analytics Engine, you'll be able to perform analytics tasks
 from either Command Line or the provided Rest API.
 
-Rest API is documented [here](heuristics/sinks/mf2c/README.md).
+Rest API is documented [here](analytics_engine/heuristics/sinks/mf2c/README.md).
 
 Examples
 ------------------

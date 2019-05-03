@@ -1,5 +1,5 @@
-#Web API Documentation
-
+Web API Documentation
+==============
 Analytics Engine provides following Web API Endpoints
 
 - **optimal**
