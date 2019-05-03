@@ -2,7 +2,7 @@ import requests
 import time
 import json
 service_json = {
-    "name": "clearwater_ims",
+    "name": "test",
     "id": "464d4a27-4f83-473f-bbe4-95c4d3b5f06b",
     "description": "clearwater_ims",
     "exec": "mf2c/compss-test:it2",
