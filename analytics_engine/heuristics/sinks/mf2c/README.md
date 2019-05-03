@@ -62,7 +62,7 @@ Analytics Engine provides following Web API Endpoints
 
 refine endpoint uses an analysis previously performed by a call to analyse end point and updates the service in CIMI with recommended CPU, Memory, Disk & Network requirements for a service. 
 
-Example web API calls are in the [test_client](~/test_client) test_client folder.
+Example web API calls are in the [test_client](../../../../test_client) test_client folder.
 
 optimal - [/analytics_engine/test_client/rest_api_client.py](/analytics_engine/test_client/rest_api_client.py)
 analyse - [/analytics_engine/test_client/rest_api_client_analyse.py](/analytics_engine/test_client/rest_api_client_analyse.py)
