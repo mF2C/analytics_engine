@@ -64,10 +64,10 @@ refine endpoint uses an analysis previously performed by a call to analyse end p
 
 Example web API calls are in the [test_client](../../../../test_client) folder.
 
-optimal - [rest_api_client.py](../../../../test_client/rest_API_client.py)
+- optimal - [rest_api_client.py](../../../../test_client/rest_API_client.py)
 
-analyse - [rest_api_client_analyse.py](../../../../test_client/rest_API_client_analyse.py)
+- analyse - [rest_api_client_analyse.py](../../../../test_client/rest_API_client_analyse.py)
 
-refine - [rest_api_client_refine.py](../../../../test_client/rest_API_client_refine.py)
+- refine - [rest_api_client_refine.py](../../../../test_client/rest_API_client_refine.py)
 
 
