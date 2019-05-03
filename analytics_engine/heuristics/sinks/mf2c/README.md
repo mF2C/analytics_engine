@@ -56,7 +56,7 @@ Analytics Engine provides following Web API Endpoints
 	analyse endpoint runs an analysis of telemetry data of a service for the requested timeframe. 
 
 
-- refine
+- **refine**
 
 		POST /mf2c/refine
 
