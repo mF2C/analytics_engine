@@ -1,7 +1,7 @@
 import requests
 import time
 import json
-service_json = {"name": "tnova-computeA"}
+service_json = {"name": "mach-computeA"}
 headers = {'Content-type': 'application/json', 'Accept': 'text/json'}
 # data=json.dumps(payload)
 url = 'http://localhost:46021/5ge/node_subgraph_telemetry'

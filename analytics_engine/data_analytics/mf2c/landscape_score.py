@@ -83,12 +83,18 @@ class LandscapeScore(object):
                 res[node_name]['compute'] = cpu_util['total'].mean() / 100
                 # mean from all disk columns
                 disk_util = InfoGraphNode.get_disk_utilization(node)
-                disk_util['total'] = [sum(row) / len(row) for index, row in disk_util.iterrows()]
-                res[node_name]['disk'] = disk_util['total'].mean() / 100
+                if disk_util.empty:
+                    res[node_name]['disk'] = 0.0
+                else:
+                    disk_util['total'] = [sum(row) / len(row) for index, row in disk_util.iterrows()]
+                    res[node_name]['disk'] = disk_util['total'].mean() / 100
                 # mean from all nic columns
                 net_util = InfoGraphNode.get_network_utilization(node)
-                net_util['total'] = [sum(row) / len(row) for index, row in net_util.iterrows()]
-                res[node_name]['network'] = net_util['total'].mean() / 100
+                if net_util.empty:
+                    res[node_name]['network'] = 0.0
+                else:
+                    net_util['total'] = [sum(row) / len(row) for index, row in net_util.iterrows()]
+                    res[node_name]['network'] = net_util['total'].mean() / 100
                 # custom metric
 
             if InfoGraphNode.get_type(node)==InfoGraphNodeType.DOCKER_CONTAINER:
@@ -110,7 +116,6 @@ class LandscapeScore(object):
                     res[node_name]['disk'] = util['intel/docker/stats/cgroups/blkio_stats/io_time_recursive/percentage'].mean() / 100
                 else:
                     res[node_name]['disk'] = 0
-
         return res
 
     @staticmethod

@@ -1,5 +1,5 @@
-#Web API Documentation
-
+Web API Documentation
+==============
 Analytics Engine provides following Web API Endpoints
 
 - **optimal**
@@ -9,7 +9,7 @@ Analytics Engine provides following Web API Endpoints
 	optimal endpoint returns a list of all the agents (devices) currently active in the landscape, together with the current resource utilization. Optionally, the list can be filtered for a specific device. Below is an example of json body for making a POST request to optimal.
 	
 		{
-			    "name": "clearwater_ims",
+			    "name": "test",
 			    "device_id": "092b7908-69ee-46ee-b2c7-2d9ae23ee298", 
 			    'sort_order': ['memory', 'cpu'], 
 			    'telemetry_filter': False, 
@@ -30,11 +30,11 @@ Analytics Engine provides following Web API Endpoints
 	
 		[
 			{
-				'ipaddress': '172.18.0.19', 
+				'ipaddress': '11.22.33.44', 
 				'mf2c_device_id': '6550f9fa-eb73-446f-acb3-f12f86524e49', 
 				'network utilization': 0.02, 
 				'compute saturation': 0.00, 
-				'node_name': 'IRILD039', 
+				'node_name': 'mach-computeA', 
 				'disk utilization': .21, 
 				'compute utilization': .32, 
 				'memory saturation': 0.00, 
