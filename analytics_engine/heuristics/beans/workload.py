@@ -87,7 +87,10 @@ class Workload(object):
 
     def get_configuration(self):
         """Returns the configuration being used"""
-        return self._workload_config
+        if self._workload_config:
+            return self._workload_config
+        else:
+            return {}
 
     def get_configuration_type(self):
         """Returns the configuration type"""
