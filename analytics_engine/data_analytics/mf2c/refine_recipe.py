@@ -29,6 +29,8 @@ class RefineRecipe(object):
 
     @staticmethod
     def _adjust(recipe, tag, value):
+        if tag == "cpu" :#and value > 10:
+            recipe.refine(tag, value)
         if tag == "memory" :#and value > 10:
             recipe.refine(tag, value)
         if tag == "disk" :#and value > 5:
@@ -51,7 +53,7 @@ class RefineRecipe(object):
         network = conf_dict['network utilization'][0]
         storage = conf_dict['disk utilization'][0]
         if recipe:
-            #RefineRecipe._adjust(recipe, "cpu", compute)
+            RefineRecipe._adjust(recipe, "cpu", compute)
             RefineRecipe._adjust(recipe, "memory", memory)
             RefineRecipe._adjust(recipe, "network", network)
             RefineRecipe._adjust(recipe, "disk", storage)

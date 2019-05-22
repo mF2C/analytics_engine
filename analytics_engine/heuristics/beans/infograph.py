@@ -496,7 +496,7 @@ class InfoGraphNode(object):
         if InfoGraphNode.get_type(node) == InfoGraphNodeType.DOCKER_CONTAINER:
             #return "7985896f2336"
             node_name = InfoGraphNode.get_name(node)
-            return node_name[:12]
+            return node_name # [:12]
 
 
 class InfoGraphUtilities():

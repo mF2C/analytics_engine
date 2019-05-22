@@ -60,12 +60,17 @@ class CimiFilter(Filter):
             service_id = recipe_json['id']
         if service_id:
             service_update = dict()
-            if recipe_json.get('memory_min'):
-                service_update['memory_min'] = recipe_json.get('memory_min')
-            if recipe_json.get('disk'):
-                service_update['disk'] = recipe_json.get('disk')
-            if recipe_json.get('network_min'):
-                service_update['network_min'] = recipe_json.get('network_min')
+            if recipe_json.get('cpu_recommended'):
+                service_update['cpu_recommended'] = recipe_json.get('cpu_recommended')
+            if recipe_json.get('memory_recommended'):
+                service_update['memory_recommended'] = recipe_json.get('memory_recommended')
+            if recipe_json.get('disk_recommended'):
+                service_update['disk_recommended'] = recipe_json.get('disk_recommended')
+            if recipe_json.get('network_recommended'):
+                service_update['network_recommended'] = recipe_json.get('network_recommended')
             ########
-            cimiclient.update_service(service_id, service_update)
-            LOG.info("Refinement updated to CIMI")
+            if len(service_update.keys()) > 0:
+                cimiclient.update_service(service_id, service_update)
+                LOG.info("Refinement updated to CIMI for service with ID - %s", service_id)
+            else:
+                LOG.info("No refinement done to CIMI service with ID - %s", service_id)

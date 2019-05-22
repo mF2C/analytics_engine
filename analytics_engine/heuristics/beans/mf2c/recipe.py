@@ -48,18 +48,21 @@ class Recipe(object):
         self._os = os
         self._req_resource = req_resource
         self._opt_resource = opt_resource
-        self._memory_min = None
-        self._disk = None
+        self._cpu_recommended = None
+        self._memory_recommended = None
+        self._disk_recommended = None
         self._storage_min = None
-        self._network_min = None
+        self._network_recommended = None
 
     def refine(self, tag, value):
-        if tag == "memory":
-            self._memory_min = value
-        if tag == "network":
-            self._network_min = value
-        if tag == "disk":
-            self._disk = value
+        if tag == "cpu":
+            self._cpu_recommended = value
+        elif tag == "memory":
+            self._memory_recommended = value
+        elif tag == "network":
+            self._network_recommended = value
+        elif tag == "disk":
+            self._disk_recommended = value
         else:
             LOG.error('Not valid tag for the recipe')
 
@@ -79,10 +82,11 @@ class Recipe(object):
                     u"os": self._os,
                     u"req_resource": self._req_resource,
                     u"opt_resource": self._opt_resource,
-                    u"memory_min": self._memory_min,
-                    u"disk": self._disk,
+                    u"cpu_recommended": self._cpu_recommended,
+                    u"memory_recommended": self._memory_recommended,
+                    u"disk_recommended": self._disk_recommended,
                     u"storage_min": self._storage_min,
-                    u"network_min": self._network_min
+                    u"network_recommended": self._network_recommended
                 }
 
         return json_recipe
@@ -110,10 +114,11 @@ class Recipe(object):
         self._req_resource = json_data.get('req_resource')
         self._opt_resource = json_data.get('opt_resource')
         self._cpu_arch = json_data.get("cpu_arch")
-        self._memory_min=json_data.get("memory_min")
-        self._disk=json_data.get("disk")
-        self._storage_min=json_data.get("storage_min")
-        self._network_min=json_data.get("network_min")
+        self._cpu_recommended = json_data.get("cpu_recommended")
+        self._memory_recommended = json_data.get("memory_recommended")
+        self._disk_recommended = json_data.get("disk_recommended")
+        self._storage_min = json_data.get("storage_min")
+        self._network_recommended = json_data.get("network_recommended")
         if 'ts_from' in json_data:
             self._ts_to = int(json_data.get('ts_to'))
             self._ts_from = int(json_data.get('ts_from'))
