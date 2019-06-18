@@ -19,6 +19,22 @@ __maintainer__ = "Giuliana Carullo"
 __email__ = "giuliana.carullo@intel.com"
 __status__ = "Development"
 
+import time
+from analytics_engine.heuristics.sinks.mf2c.influx_sink import InfluxSink
+from analytics_engine.heuristics.beans.mf2c.recipe import Recipe
+from analytics_engine.heuristics.pipes.fiveg_essence.node_subgraph_telemetry_pipe import NodeSubgraphTelemetryPipe
+from analytics_engine.heuristics.pipes.fiveg_essence.active_service_pipe import ActiveServicePipe
+from analytics_engine.heuristics.pipes.fiveg_essence.analyse_service_hist_pipe import AnalyseServiceHistPipe
+from analytics_engine.heuristics.pipes.mf2c.analyse_pipe import AnalysePipe
+from analytics_engine.heuristics.pipes.mf2c.refine_recipe_pipe import RefineRecipePipe
+from analytics_engine.heuristics.filters.optimal_filter import OptimalFilter
+from analytics_engine.heuristics.pipes.optimal_pipe import OptimalPipe
+from analytics_engine.heuristics.beans.workload import Workload
+from flask import Response
+from flask import request
+import flask
+from networkx.readwrite import json_graph
+import json
 import os
 import threading
 import analytics_engine.common as common
@@ -30,24 +46,6 @@ LOCAL_RES_DIR = os.path.join(common.INSTALL_BASE_DIR, "exported_data")
 REST Application for the landscape.
 """
 
-import json
-from networkx.readwrite import json_graph
-import flask
-from flask import request
-from flask import Response
-from analytics_engine.heuristics.beans.workload import Workload
-from analytics_engine.heuristics.pipes.optimal_pipe import OptimalPipe
-from analytics_engine.heuristics.filters.optimal_filter import OptimalFilter
-from analytics_engine.heuristics.pipes.mf2c.refine_recipe_pipe import RefineRecipePipe
-from analytics_engine.heuristics.pipes.mf2c.analyse_pipe import AnalysePipe
-from analytics_engine.heuristics.pipes.fiveg_essence.analyse_service_hist_pipe import AnalyseServiceHistPipe
-from analytics_engine.heuristics.pipes.fiveg_essence.active_service_pipe import ActiveServicePipe
-from analytics_engine.heuristics.pipes.fiveg_essence.node_subgraph_telemetry_pipe import NodeSubgraphTelemetryPipe
-from analytics_engine.heuristics.beans.mf2c.recipe import Recipe
-from analytics_engine.heuristics.sinks.mf2c.influx_sink import InfluxSink
-
-import analytics_engine.common as common
-import time
 
 LOG = common.LOG
 
@@ -67,17 +65,18 @@ def get_optimal():
     LOG.info(str(recipe['name']))
     current_time = int(time.time())
     workload_name = 'optimal_'+str(current_time)
-    #if 'ts_from' in recipe:
+    # if 'ts_from' in recipe:
     #    LOG.debug(recipe['ts_from'])
     #    LOG.debug(recipe['ts_to'])
     #    workload = Workload(str(recipe['name']), ts_from= recipe['ts_from'], ts_to= recipe['ts_to'])
     # eng = Engine()
     # eng.run('optimal', recipe['name'], recipe['ts_from'], recipe['ts_to'])
-    #else:
+    # else:
     #   workload = Workload(str(recipe['name']))
     config = {}
     if recipe.get('device_id'):
-        config['device_id'] = recipe['device_id'].strip().lower().replace('-', '_')
+        config['device_id'] = recipe['device_id'].strip(
+        ).lower().replace('-', '_')
     if recipe.get('project'):
         config['project'] = recipe['project']
     if recipe.get('sort_order'):
@@ -91,15 +90,19 @@ def get_optimal():
     # TODO: validate recipe format
     recipe_bean = Recipe()
     recipe_bean.from_json(recipe)
-    workload.add_recipe(int("{}{}".format(int(round(time.time())), '000000000')), recipe_bean)
+    workload.add_recipe(
+        int("{}{}".format(int(round(time.time())), '000000000')), recipe_bean)
     pipe_exec = OptimalPipe()
     node_type = 'machine'
-    workload = pipe_exec.run(workload, node_type)
+    try:
+        workload = pipe_exec.run(workload, node_type)
+    except KeyError:
+        return Response('Service not ready yet, please wait or restart landscape', status=202)
     if workload.get_latest_graph() is None and config.get('device_id') is not None:
         return Response('Device not found', status=404)
     results = workload.get_metadata(OptimalFilter.__filter_name__)
-    #return Response(results.to_json(), mimetype=MIME)
-    #return Response(results.to_dict('results'), mimetype=MIME)
+    # return Response(results.to_json(), mimetype=MIME)
+    # return Response(results.to_dict('results'), mimetype=MIME)
     json_results = json.dumps(results.to_dict('results'))
     return Response(json_results, mimetype=MIME)
 
@@ -131,7 +134,8 @@ def analyse():
         recipe_bean = Recipe()
         recipe_bean.from_json(recipe)
         workload = Workload(id, int(params['ts_from']), int(params['ts_to']))
-        workload.add_recipe(int("{}{}".format(int(round(time.time())), '000000000')), recipe_bean)
+        workload.add_recipe(
+            int("{}{}".format(int(round(time.time())), '000000000')), recipe_bean)
     else:
         LOG.info("Reusing existing analysis")
     pipe_exec = AnalysePipe()
@@ -169,7 +173,7 @@ def refine_recipe():
         return Response(json.dumps(recipe.to_json()), mimetype=MIME)
     return Response(json.dumps({}), mimetype=MIME)
 
-#5g essence specific
+# 5g essence specific
 @app.route("/5ge/optimal_vms", methods=['GET', 'POST'])
 def get_optimal_vms():
     """
@@ -180,22 +184,24 @@ def get_optimal_vms():
     LOG.info(recipe)
     LOG.info(str(recipe['name']))
     current_time = int(time.time())
-    workload = Workload(str(recipe['name']), ts_from=(current_time-10), ts_to=current_time)
+    workload = Workload(str(recipe['name']), ts_from=(
+        current_time-10), ts_to=current_time)
     # storing initial recipe
     # TODO: validate recipe format
     recipe_bean = Recipe()
     recipe_bean.from_json(recipe)
-    workload.add_recipe(int("{}{}".format(int(round(time.time())), '000000000')), recipe_bean)
+    workload.add_recipe(
+        int("{}{}".format(int(round(time.time())), '000000000')), recipe_bean)
     pipe_exec = OptimalPipe()
     node_type = 'vm'
     workload = pipe_exec.run(workload, node_type)
     results = workload.get_metadata(OptimalFilter.__filter_name__)
-    #return Response(results.to_json(), mimetype=MIME)
-    #return Response(results.to_dict('results'), mimetype=MIME)
+    # return Response(results.to_json(), mimetype=MIME)
+    # return Response(results.to_dict('results'), mimetype=MIME)
     json_results = json.dumps(results.to_dict('results'))
     return Response(json_results, mimetype=MIME)
 
-#5g essence specific
+# 5g essence specific
 @app.route("/5ge/active_services", methods=['GET', 'POST'])
 def get_active_services():
     """
@@ -227,7 +233,8 @@ def analyze_service():
     # TODO: validate recipe format
     recipe_bean = Recipe()
     recipe_bean.from_json(recipe)
-    workload.add_recipe(int("{}{}".format(int(round(time.time())), '000000000')), recipe_bean)
+    workload.add_recipe(
+        int("{}{}".format(int(round(time.time())), '000000000')), recipe_bean)
     pipe_exec = AnalyseServiceHistPipe()
     workload = pipe_exec.run(workload, service_type)
     analysis_description = {
@@ -253,7 +260,8 @@ def get_subgraph_telemetry():
     # TODO: validate recipe format
     recipe_bean = Recipe()
     recipe_bean.from_json(recipe)
-    workload.add_recipe(int("{}{}".format(int(round(time.time())), '000000000')), recipe_bean)
+    workload.add_recipe(
+        int("{}{}".format(int(round(time.time())), '000000000')), recipe_bean)
     pipe_exec = NodeSubgraphTelemetryPipe()
     workload = pipe_exec.run(workload)
     analysis_description = {
