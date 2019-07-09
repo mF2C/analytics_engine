@@ -100,6 +100,8 @@ def get_optimal():
         return Response('Service not ready yet, please wait or restart landscape', status=202)
     if workload.get_latest_graph() is None and config.get('device_id') is not None:
         return Response('Device not found', status=404)
+    if workload.get_latest_graph() is None:
+        return Response('Landscape not ready yet?', status=202)
     results = workload.get_metadata(OptimalFilter.__filter_name__)
     # return Response(results.to_json(), mimetype=MIME)
     # return Response(results.to_dict('results'), mimetype=MIME)

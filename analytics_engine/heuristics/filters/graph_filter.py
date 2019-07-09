@@ -48,12 +48,9 @@ class GraphFilter(Filter):
             subgraph = SubgraphUtilities.extract_infrastructure_graph(workload.get_workload_name(),
                                                                       workload.get_ts_from(),
                                                                       workload.get_ts_to())
+            workload.save_results(self.__filter_name__, subgraph)
         except Exception as e:
                 LOG.error(e)
                 LOG.error("No topology data has been found for the selected "
                               "workload.")
-                import traceback
-                traceback.print_exc()
-                exit()
-        workload.save_results(self.__filter_name__, subgraph)
         return subgraph
